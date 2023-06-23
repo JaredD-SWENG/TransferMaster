@@ -133,9 +133,11 @@ import {
 import ParentCard from "../../src/components/shared/ParentCard";
 import PageContainer from "../../src/components/container/PageContainer";
 import CustomFormLabel from "../../src/components/forms/theme-elements/CustomFormLabel";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import CustomRangeSlider from "../../src/components/forms/theme-elements/CustomRangeSlider";
+import { getDoc, DocumentData, doc } from "firebase/firestore";
+import { db } from "../../config/firebase";
 
 import { TransitionProps } from '@mui/material/transitions';
 import Result from "./Result";
@@ -185,12 +187,33 @@ const SyllabusForm: React.FC<SyllabusProps> = ({ course, credits, textbook, lear
 {/**SyllabusComparison */}
 const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook, learningObjectives}) => {
     const [displayText, setDisplayText] = useState('');
+    const [extCourseName, setCourseName] = useState("");
+    const [extCredits, setCredits] = useState(0);
+   
     const router = useRouter();
   
     const handleCompare = () => {
         setDisplayText('Comparison successful!');
-        router.push('comparison/Result')
+        router.push('./Result')
     };
+
+    useEffect(() => {
+        const fetchSyllabusData = async () => {
+          const { externalSyllabus } = router.query;
+          if (externalSyllabus) {
+            const syllabusDocRef = doc(db, externalSyllabus as string);
+            const syllabusDoc = await getDoc(syllabusDocRef);
+            if (syllabusDoc.exists()) {
+              const syllabusData = syllabusDoc.data() as DocumentData;
+              const { CourseName, Credits } = syllabusData;
+              setCourseName(CourseName);
+              setCredits(Credits);
+            }
+          }
+        };
+    
+        fetchSyllabusData();
+      }, [router.query]);
  
     return (
         <PageContainer>
@@ -207,7 +230,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                 </Grid>
                 <Grid item xs={12} lg={6}>
                 <ParentCard title="External School">
-                    <SyllabusForm course={course} credits={credits} textbook={textbook} learningObjectives={learningObjectives} />
+                    <SyllabusForm course={extCourseName} credits={extCredits} textbook={textbook} learningObjectives={learningObjectives} />
                 </ParentCard>
             </Grid>
             <Grid item xs={12} lg={16}>

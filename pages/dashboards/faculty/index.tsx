@@ -1,61 +1,101 @@
 import { MenuItem, TableContainer, Table, TableHead, TableRow, TableCell, Typography, TableBody, Stack, Avatar, Chip, Box, Card, Button, Grid } from "@mui/material"
 import CustomSelect from "../../../src/components/forms/theme-elements/CustomSelect"
 import DashboardCard from "../../../src/components/shared/DashboardCard"
-import { Key, ReactElement, JSXElementConstructor, ReactFragment, ReactPortal } from "react";
+import { Key, ReactElement, JSXElementConstructor, ReactFragment, ReactPortal, useState, useEffect } from "react";
 import { Router, useRouter } from "next/router";
-
-//requests collection 
+import { auth, db } from "../../../config/firebase";
+import { DocumentReference, Timestamp, collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+//Requests collection
 interface RequestType {
-    id: number;
-    name: string;
-    syllabus: string;
-    status: string;
-    date: string;
-  }
+  id: string;
+  Requester: DocumentReference;
+  ExternalSyllabus: DocumentReference;
+  ExternalSyllabusPath: string;
+  Status: string;
+  Date: string;
+}
 
-  //hard coded requests - to be changed so that they're pulled from "requests" collection in firebase 
-const Request: RequestType[] = [
-    {
-        id: 1,
-        name: "Sunil Joshi",
-        syllabus: "MATH 141",
-        status: "To-do",
-        date: "06/03/2023",
-    },
-    {
-        id: 2,
-        name: "John Deo",
-        syllabus: "CYBER 100",
-        status: "In progress",
-        date: "06/01/2023",
-    },
-    {
-        id: 3,
-        name: "Nirav Joshi",
-        syllabus: "EE 211",
-        status: "Approved",
-        date: "05/29/2023",
-    },
-    {
-        id: 4,
-        name: "Yuvraj Sheth",
-        syllabus: "ENGL 202C",
-        status: "Rejected",
-        date: "05/25/2023",
-    }
-]
+interface RequestDisplayType {
+  id: string;
+  Requester: string;
+  ExternalSyllabus: string; //name of syllabus should be displayed as a string
+  ExternalSyllabusPath: string;
+  Status: string;
+  Date: string;
+}
 
 const FacultyDashboard = () => {
+  const [requests, setRequests] = useState<RequestDisplayType[]>([]);
+
     const router = useRouter();
-    function handleClick() {
-        return (
-            router.push('../../comparison')
-        );
+    
+    const handleClick = (externalSyllabus: string) => {
+      console.log(externalSyllabus)
+      router.push({
+        pathname: "../../comparison/SyllabusComparison",
+        query: { externalSyllabus },
+        
+      });
     };
 
+    //are we using this?
     const handleUploadHistoryClick = () => {
-        router.push('../../myUploads')}
+        router.push('../myUploads')}
 
+        useEffect(() => {
+          const fetchRequests = async () => {
+              const currentUser = auth.currentUser;
+              let userId = null;
+              if (currentUser !== null) {
+                  const email = currentUser.email;
+                  const q = query(collection(db, 'Users'), where('Email', '==', email));
+                  const querySnapshot = await getDocs(q);
+  
+                  if (!querySnapshot.empty) {
+                      const userDoc = querySnapshot.docs[0];
+                      userId = userDoc.id;
+                      console.log(userId)
+                  }
+              }
+              const requestsCollection = collection(db, 'Requests');
+              const querySnapshot = await getDocs(
+                  query(requestsCollection, where('Reviewer', '==', userId))
+              );
+  
+              const fetchedRequests: RequestDisplayType[] = [];
+  
+              for (const doc of querySnapshot.docs) {
+                  const requestData = doc.data() as RequestType;
+  
+                  // Convert the 'Date' object to a readable format
+                  const timestamp = requestData.Date as unknown as Timestamp;
+                  const date = timestamp.toDate().toLocaleDateString();
+  
+                  // Fetch the ExternalSyllabus document
+                  const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
+                  console.log(requestData.ExternalSyllabus.path);
+                  const externalSyllabusPath = requestData.ExternalSyllabus.path;
+                  const syllabusData = syllabusSnapshot.data()?.CourseName;
+  
+                  // Fetch the Requester document
+                  const requesterSnapshot = await getDoc(requestData.Requester);
+                  const requesterData = requesterSnapshot.data()?.Name;
+  
+                  fetchedRequests.push({
+                      id: doc.id,
+                      Requester: requesterData,
+                      ExternalSyllabus: syllabusData,
+                      ExternalSyllabusPath: externalSyllabusPath,
+                      Status: requestData.Status,
+                      Date: date,
+                  });
+              }
+  
+              setRequests(fetchedRequests);
+          };
+  
+          fetchRequests();
+      }, []); // <-- Empty dependency array
     return (
       
         <>
@@ -65,99 +105,106 @@ const FacultyDashboard = () => {
         </Grid>
         <DashboardCard
             title="Requests"
-            action={<CustomSelect
-                labelId="month-dd"
-                id="month-dd"
-                size="small"
-            >
-                <MenuItem value={1}>March 2023</MenuItem>
-                <MenuItem value={2}>April 2023</MenuItem>
-                <MenuItem value={3}>May 2023</MenuItem>
-            </CustomSelect>}
+            action={
+                <CustomSelect
+                    labelId="month-dd"
+                    id="month-dd"
+                    size="small"
+                >
+                    <MenuItem value={1}>March 2023</MenuItem>
+                    <MenuItem value={2}>April 2023</MenuItem>
+                    <MenuItem value={3}>May 2023</MenuItem>
+                </CustomSelect>
+            }
         >
-
-                <TableContainer>
-                    <Table
-                        aria-label="simple table"
-                        sx={{
-                            whiteSpace: 'nowrap',
-                        }}
-                    >
-                        <TableHead>
-                            <TableRow>
+            <TableContainer>
+                <Table
+                    aria-label="simple table"
+                    sx={{
+                        whiteSpace: 'nowrap',
+                    }}
+                >
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>
+                                <Typography variant="subtitle2" fontWeight={600}>Requested by</Typography>
+                            </TableCell>
+                            <TableCell>
+                                <Typography variant="subtitle2" fontWeight={600}>Syllabus</Typography>
+                            </TableCell>
+                            <TableCell>
+                                <Typography variant="subtitle2" fontWeight={600}>Status</Typography>
+                            </TableCell>
+                            <TableCell>
+                                <Typography variant="subtitle2" fontWeight={600}>Date</Typography>
+                            </TableCell>
+                            <TableCell>
+                                <Typography variant="subtitle2" fontWeight={600}>Actions</Typography>
+                            </TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {requests.map((request) => (
+                            <TableRow key={request.id}>
                                 <TableCell>
-                                    <Typography variant="subtitle2" fontWeight={600}>Requested by</Typography>
+                                    <Stack direction="row" spacing={2}>
+                                        <Box>
+                                            <Typography variant="subtitle2" fontWeight={600}>
+                                                {request.Requester}
+                                            </Typography>
+                                        </Box>
+                                    </Stack>
                                 </TableCell>
                                 <TableCell>
-                                    <Typography variant="subtitle2" fontWeight={600}>Syllabus</Typography>
+                                    <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
+                                        {request.ExternalSyllabus}
+                                    </Typography>
                                 </TableCell>
                                 <TableCell>
-                                    <Typography variant="subtitle2" fontWeight={600}>Status</Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="subtitle2" fontWeight={600}>Date</Typography>
-                                </TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {Request.map((basic) => (
-                                <TableRow onClick={handleClick} key={basic.id}>
-                                    <TableCell>
-                                        <Stack direction="row" spacing={2}>
-                                            <Box>
-                                                <Typography variant="subtitle2" fontWeight={600}>
-                                                    {basic.name}
-                                                </Typography>
-                                            </Box>
-                                        </Stack>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
-                                            {basic.syllabus}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Chip
-                                            sx={{
-                                                bgcolor: basic.status === 'To-do'
+                                    <Chip
+                                        sx={{
+                                            bgcolor:
+                                                request.Status === 'To-do'
                                                     ? (theme) => theme.palette.error.light
-                                                    : basic.status === 'In Progress'
+                                                    : request.Status === 'In progress'
                                                         ? (theme) => theme.palette.warning.light
-                                                        : basic.status === 'Approved'
+                                                        : request.Status === 'Approved'
                                                             ? (theme) => theme.palette.success.light
-                                                            : basic.status === 'Rejected'
+                                                            : request.Status === 'Rejected'
                                                                 ? (theme) => theme.palette.info.light
                                                                 : (theme) => theme.palette.secondary.light,
-                                                color: basic.status === 'To-do'
+                                            color:
+                                                request.Status === 'To-do'
                                                     ? (theme) => theme.palette.error.main
-                                                    : basic.status === 'In Progress'
+                                                    : request.Status === 'In progress'
                                                         ? (theme) => theme.palette.warning.main
-                                                        : basic.status === 'Approved'
+                                                        : request.Status === 'Approved'
                                                             ? (theme) => theme.palette.success.main
-                                                            : basic.status === 'Rejected'
+                                                            : request.Status === 'Rejected'
                                                                 ? (theme) => theme.palette.info.main
                                                                 : (theme) => theme.palette.secondary.main,
-                                                borderRadius: '8px',
-                                            }}
-                                            size="small"
-                                            label={basic.status} />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
-                                            {basic.date}
-                                        </Typography>
-                                    </TableCell>
-                                    {/* <TableCell>
-                <Button variant="outlined" onClick={handleClick}>
-                    Review
-                </Button>
-            </TableCell> */}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </DashboardCard></>
+                                            borderRadius: '8px',
+                                        }}
+                                        size="small"
+                                        label={request.Status}
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                    <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
+                                        {request.Date}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Button variant="outlined" onClick={() => handleClick(request.ExternalSyllabusPath)}>
+                                        Review
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </DashboardCard></>
     );
 };
 

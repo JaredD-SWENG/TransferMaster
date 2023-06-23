@@ -170,6 +170,10 @@ const StudentDashboard = () => {
   }, []); // <-- Empty dependency array
 
   return (
+    <>
+    <Grid item xs={12} mt={3} mb={3}>
+    <Button variant="contained" color="primary" onClick={handleSubmit}>Submit new Request</Button>
+    </Grid>
     <DashboardCard
       title="Requests"
       action={
@@ -248,7 +252,7 @@ const StudentDashboard = () => {
           </TableBody>
         </Table>
       </TableContainer>
-    </DashboardCard>
+    </DashboardCard></>
   );
 };
 
