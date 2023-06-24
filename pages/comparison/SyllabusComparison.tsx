@@ -194,7 +194,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
   
     const handleCompare = () => {
         setDisplayText('Comparison successful!');
-        router.push('./Result')
+        router.push('comparison/Result')
     };
 
     useEffect(() => {

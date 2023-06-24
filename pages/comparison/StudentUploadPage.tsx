@@ -11,12 +11,15 @@ import ComboBoxAutocomplete from '../../src/components/forms/form-elements/autoC
 import { useRouter } from "next/router";
 import { getBytes, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { db, storage, auth } from '../../config/firebase';
-import { ChangeEvent, SetStateAction, useEffect, useState } from 'react';
+import { ChangeEvent, ReactElement, SetStateAction, useEffect, useState } from 'react';
 import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import axios from 'axios';
 import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
+import withRole from '../../src/components/hocs/withRole';
+import FullLayout from '../../src/layouts/full/FullLayout';
+import CustomNextPage from '../../types/custom';
 
-const StudentDashboard = () => {
+const StudentUploadPage: CustomNextPage = () => {
 
   //OS Parser API call 
   async function parse_doc(data: any) {
@@ -27,7 +30,7 @@ const StudentDashboard = () => {
       },
     });
     return response.data;
-}
+  }
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [documentId, setDocumentId] = useState<string | null>(null);
@@ -119,14 +122,12 @@ const handleSubmit = async () => {
       const storageRef = ref(storage, 'uploads/' + selectedFile.name);
       await uploadBytes(storageRef, selectedFile);
 
-       
-
-    //Store the uploaded syllabus's path in /SyllabiURL
+      //Store the uploaded syllabus's path in /SyllabiURL
       const docRef = await addDoc(collection(db, 'SyllabiURL'), { fileUrl: storageRef.fullPath });
       setDocumentId(docRef.id);
       console.log('File uploaded successfully!');
 
-    //Store the extracted sections and user-enetered fields in /Syllabi
+      //Store the extracted sections and user-enetered fields in /Syllabi
       const syllabiDoc = {
         InstitutionName: institutionValue,
         CourseName: courseNameValue,
@@ -136,12 +137,10 @@ const handleSubmit = async () => {
         SyllabusURL: doc(db, 'SyllabiURL', docRef.id)
       }
 
-
-  
       const syllabiRef = await addDoc(collection(db, 'Syllabi'), syllabiDoc);
       console.log('Syllabus data stored successfully!');
 
-    //Create and store a request in /Requests (once the syllabus is uploaded )
+       //Create and store a request in /Requests (once the syllabus is uploaded )
       const requestDoc = {
         Comments: null,
         Date: serverTimestamp(),
@@ -157,17 +156,11 @@ const handleSubmit = async () => {
       await setDoc(requestRef, requestDoc);
       console.log('Request data stored successfully!');
 
-      
-      
-     
-
     } catch (error) {
       console.error('Failed to upload file:', error);
-      
     }
   } else {
     console.error('No file selected!');
-   
   }
 
   router.push('../../dashboards/student'); //once they submit request, take student back to dashboard
@@ -274,6 +267,8 @@ const handleSubmit = async () => {
   );
 };
 
-export default StudentDashboard;
+StudentUploadPage.getLayout = function getLayout(page: ReactElement) {
+    return <FullLayout>{page}</FullLayout>;
+};
 
-
+export default withRole({ Component: StudentUploadPage, roles: ['Student'] });

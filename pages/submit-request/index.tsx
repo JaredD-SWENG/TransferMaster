@@ -3,9 +3,12 @@ import CustomTextField from '../../src/components/forms/theme-elements/CustomTex
 import CustomFormLabel from '../../src/components/forms/theme-elements/CustomFormLabel';
 import ComboBoxAutocomplete from '../../src/components/forms/form-elements/autoComplete/ComboBoxAutocomplete';
 import { useRouter } from "next/router";
-import { useState } from 'react';
+import { ReactElement, useState } from 'react';
+import CustomNextPage from '../../types/custom';
+import withRole from '../../src/components/hocs/withRole';
+import FullLayout from '../../src/layouts/full/FullLayout';
 
-const StudentDashboard = () => {
+const SubmitRequest: CustomNextPage = () => {
   const router = useRouter();
   const [displayText, setDisplayText] = useState('');
   
@@ -81,7 +84,7 @@ const StudentDashboard = () => {
         </CustomFormLabel>
       </Grid>
       <Grid item xs={12}>
-        <ComboBoxAutocomplete/>
+        <ComboBoxAutocomplete />
       </Grid>
       {/* 8 */}
       <Grid item xs={12} display="flex" alignItems="center">
@@ -108,4 +111,8 @@ const StudentDashboard = () => {
   );
 };
 
-export default StudentDashboard;
+SubmitRequest.getLayout = function getLayout(page: ReactElement) {
+  return <FullLayout>{page}</FullLayout>;
+};
+
+export default withRole({ Component: SubmitRequest, roles: ['Student'] });
