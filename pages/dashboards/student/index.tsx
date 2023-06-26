@@ -31,7 +31,7 @@ import ParentCard from '../../../src/components/shared/ParentCard';
 import { Stack } from '@mui/system';
 import BlankCard from '../../../src/components/shared/BlankCard';
 import { useRouter } from 'next/router';
-import { DocumentReference, Timestamp, collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { DocumentReference, Timestamp, collection, doc, getDoc, getDocs, query, where, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../../../config/firebase';
 import DashboardCard from '../../../src/components/shared/DashboardCard';
 import CustomSelect from '../../../src/components/forms/theme-elements/CustomSelect';
@@ -127,48 +127,58 @@ const StudentDashboard = () => {
         const email = currentUser.email;
         const q = query(collection(db, 'Users'), where('Email', '==', email));
         const querySnapshot = await getDocs(q);
-
+  
         if (!querySnapshot.empty) {
           const userDoc = querySnapshot.docs[0];
           userId = userDoc.id;
         }
       }
       const requestsCollection = collection(db, 'Requests');
-      const querySnapshot = await getDocs(
-        query(requestsCollection, where('Requester', '==', userId ? doc(db, 'Users', userId) : null))
-      );
-      const fetchedRequests: RequestDisplayType[] = [];
-
-      for (const doc of querySnapshot.docs) {
-        const requestData = doc.data() as RequestType;
-
-        // Convert the 'Date' object to a readable format
-        const timestamp = requestData.Date as unknown as Timestamp;
-        const date = timestamp.toDate().toLocaleDateString();
-
-        // Fetch the ExternalSyllabus document
-        const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
-        const syllabusData = syllabusSnapshot.data()?.CourseName;
-
-        // Fetch the Requester document
-        const requesterSnapshot = await getDoc(requestData.Requester);
-        const requesterData = requesterSnapshot.data()?.Name;
-
-        fetchedRequests.push({
-          id: doc.id,
-          Requester: requesterData,
-          ExternalSyllabus: syllabusData,
-          Status: requestData.Status,
-          Date: date,
-        });
-      }
-
-      setRequests(fetchedRequests);
+      const q = query(requestsCollection, where('Requester', '==', userId ? doc(db, 'Users', userId) : null));
+  
+      // Listen for real-time updates
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const processSnapshot = async () => {
+          const fetchedRequests: RequestDisplayType[] = [];
+      
+          for (const doc of querySnapshot.docs) {
+            const requestData = doc.data() as RequestType;
+      
+            // Convert the 'Date' object to a readable format
+            const timestamp = requestData.Date as unknown as Timestamp;
+            const date = timestamp.toDate().toLocaleDateString();
+      
+            // Fetch the ExternalSyllabus document
+            const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
+            const syllabusData = syllabusSnapshot.data()?.CourseName;
+      
+            // Fetch the Requester document
+            const requesterSnapshot = await getDoc(requestData.Requester);
+            const requesterData = requesterSnapshot.data()?.Name;
+      
+            fetchedRequests.push({
+              id: doc.id,
+              Requester: requesterData,
+              ExternalSyllabus: syllabusData,
+              Status: requestData.Status,
+              Date: date,
+            });
+          }
+      
+          setRequests(fetchedRequests);
+        };
+      
+        processSnapshot();
+      });
+      
+  
+      // Clean up the listener when the component unmounts
+      return () => unsubscribe();
     };
-
+  
     fetchRequests();
   }, []); // <-- Empty dependency array
-
+  
   return (
     <>
     <Grid item xs={12} mt={3} mb={3}>
