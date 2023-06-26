@@ -1,3 +1,5 @@
+
+import React, { SetStateAction, useState } from 'react';
 import { Box, Typography, Button, Divider } from "@mui/material";
 import Link from "next/link";
 import CustomTextField from "../../../src/components/forms/theme-elements/CustomTextField";
@@ -5,55 +7,144 @@ import CustomFormLabel from "../../../src/components/forms/theme-elements/Custom
 import { Stack } from "@mui/system";
 import { registerType } from "../../../src/types/auth/auth";
 import AuthSocialButtons from "./AuthSocialButtons";
+import ComboBoxAutocomplete from "../../../src/components/forms/form-elements/autoComplete/ComboBoxAutocomplete";
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { auth } from "../../../config/firebase";
+import router, { useRouter } from 'next/router';
 
-const AuthRegister = ({ title, subtitle, subtext }: registerType) => (
-  <>
-    {title ? (
-      <Typography fontWeight="700" variant="h3" mb={1}>
-        {title}
-      </Typography>
-    ) : null}
+const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
+  const [role, setRole] = useState('');
+  const [department, setDepartment] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const router = useRouter();
+  
+  const handleRoleChange = (value: string) => {
+    setRole(value);
+    if (value === 'Student') {
+      setDepartment(''); // Clear the department when role is "Student"
+    }
+  };
 
-    {subtext}
-    <AuthSocialButtons title="Sign up with" />
+  const handleRegister = async () => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-    <Box mt={3}>
-      <Divider>
-        <Typography
-          component="span"
-          color="textSecondary"
-          variant="h6"
-          fontWeight="400"
-          position="relative"
-          px={2}
-        >
-          or sign up with
+      // Get the newly created user's UID
+      const uid = userCredential.user.uid;
+
+      // Store the user's role in the Firebase database
+      const db = getFirestore();
+      const usersCollection = collection(db, "Users");
+      await addDoc(usersCollection, {
+        Name: name,
+        Email: email,
+        Role: role,
+        Department: department
+      });
+
+      setSuccessMessage("Successfully registered!");
+      setTimeout(() => {
+        setSuccessMessage("");
+        router.push("/auth/auth1/login");
+      }, 3000);
+    } catch (error) {
+      let errorMessage = "Failed to do something exceptional";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      console.log(errorMessage);
+    }
+  };
+  return (
+    <>
+      {title ? (
+        <Typography fontWeight="700" variant="h3" mb={1}>
+          {title}
         </Typography>
-      </Divider>
-    </Box>
+      ) : null}
 
-    <Box>
-      <Stack mb={3}>
-        <CustomFormLabel htmlFor="name">Name</CustomFormLabel>
-        <CustomTextField id="name" variant="outlined" fullWidth />
-        <CustomFormLabel htmlFor="email">Email Adddress</CustomFormLabel>
-        <CustomTextField id="email" variant="outlined" fullWidth />
-        <CustomFormLabel htmlFor="password">Password</CustomFormLabel>
-        <CustomTextField id="password" variant="outlined" fullWidth />
-      </Stack>
-      <Button
-        color="primary"
-        variant="contained"
-        size="large"
-        fullWidth
-        component={Link}
-        href="/auth/login"
-      >
-        Sign Up
-      </Button>
-    </Box>
-    {subtitle}
-  </>
-);
+      {/* {subtext}
+      <AuthSocialButtons title="Sign up with" /> */}
+
+      {/* <Box mt={3}>
+        <Divider>
+          <Typography
+            component="span"
+            color="textSecondary"
+            variant="h6"
+            fontWeight="400"
+            position="relative"
+            px={2}
+          >
+            or sign up with
+          </Typography>
+        </Divider>
+      </Box> */}
+
+      <Box>
+        <Stack mb={3}>
+          <CustomFormLabel htmlFor="name">Name</CustomFormLabel>
+          <CustomTextField
+           id="name"
+           variant="outlined"
+           fullWidth
+           value={name}
+           onChange={(e: { target: { value: SetStateAction<string>; }; }) => setName(e.target.value)} />
+          <CustomFormLabel htmlFor="email">Email Address</CustomFormLabel>
+          <CustomTextField
+            id="email"
+            variant="outlined"
+            fullWidth
+            value={email}
+            onChange={(e: { target: { value: SetStateAction<string>; }; }) => setEmail(e.target.value)}
+          />
+          <CustomFormLabel htmlFor="password" >Password</CustomFormLabel>
+          <CustomTextField
+           id="password" 
+           variant="outlined"
+           fullWidth
+           value={password}
+          onChange={(e: { target: { value: SetStateAction<string>; }; }) => setPassword(e.target.value)} />
+          <CustomFormLabel htmlFor="role">Role</CustomFormLabel>
+          <ComboBoxAutocomplete
+            value={role}
+            setValue={handleRoleChange}
+            options={['Student', 'Transfer Specialist', 'Faculty']}
+            placeholder="Select role"
+          />
+          { role === 'Reviewer' && (
+            <>
+              <CustomFormLabel htmlFor="department">Department</CustomFormLabel>
+              <ComboBoxAutocomplete
+                value={department}
+                setValue={setDepartment}
+                options={['Biology', 'Math', 'English', 'Computer Science', 'Other']}
+                placeholder="Select department"
+                //disabled={role === 'Student' || role === 'Transfer Specialist'}
+              />
+          </>
+          ) }
+        </Stack>
+        <Button
+          color="primary"
+          variant="contained"
+          size="large"
+          fullWidth
+          onClick={handleRegister}
+        >
+          Sign Up
+        </Button>
+      </Box>
+      {subtitle}
+    </>
+  );
+};
 
 export default AuthRegister;
+
+

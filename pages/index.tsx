@@ -14,22 +14,24 @@ import SellingProducts from "../src/components/dashboards/modern/SellingProducts
 import WeeklyStats from "../src/components/dashboards/modern/WeeklyStats";
 import TopPerformers from "../src/components/dashboards/modern/TopPerformers";
 import Welcome from "../src/layouts/full/shared/welcome/Welcome";
+import LandingPage from "./landingpage";
 
-const Modern = () => {
+const Home = () => {
   return (
     <PageContainer>
-      <Box>
+      <LandingPage/>
+      {/* <Box>
         <Grid container spacing={3}>
           {/* column */}
-          <Grid item xs={12} lg={12}>
+          {/* <Grid item xs={12} lg={12}>
             <TopCards />
-          </Grid>
+          </Grid> */}
           {/* column */}
-          <Grid item xs={12} lg={8}>
+          {/* <Grid item xs={12} lg={8}>
             <RevenueUpdates />
-          </Grid>
+          </Grid> */}
           {/* column */}
-          <Grid item xs={12} lg={4}>
+          {/* <Grid item xs={12} lg={4}>
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6} lg={12}>
                 <YearlyBreakup />
@@ -38,13 +40,13 @@ const Modern = () => {
                 <MonthlyEarnings />
               </Grid>
             </Grid>
-          </Grid>
+          </Grid> */}
           {/* column */}
-          <Grid item xs={12} lg={4}>
+          {/* <Grid item xs={12} lg={4}>
             <EmployeeSalary />
-          </Grid>
+          </Grid> */}
           {/* column */}
-          <Grid item xs={12} lg={4}>
+          {/* <Grid item xs={12} lg={4}>
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
                 <Customers />
@@ -56,25 +58,26 @@ const Modern = () => {
                 <Social />
               </Grid>
             </Grid>
-          </Grid>
+          </Grid> */}
           {/* column */}
-          <Grid item xs={12} lg={4}>
+          {/* <Grid item xs={12} lg={4}>
             <SellingProducts />
-          </Grid>
+          </Grid> */}
           {/* column */}
-          <Grid item xs={12} lg={4}>
+          {/* <Grid item xs={12} lg={4}>
             <WeeklyStats />
-          </Grid>
+          </Grid> */}
           {/* column */}
-          <Grid item xs={12} lg={8}>
+          {/* <Grid item xs={12} lg={8}>
             <TopPerformers />
           </Grid>
-        </Grid>
+        </Grid> */}
         {/* column */}
-        <Welcome />
-      </Box>
+        {/* <Welcome />
+      </Box> */}
     </PageContainer>
   );
 };
 
-export default Modern;
+Home.layout = "Blank";
+export default Home;
