@@ -18,6 +18,10 @@ import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
 import withRole from '../../src/components/hocs/withRole';
 import FullLayout from '../../src/layouts/full/FullLayout';
 import CustomNextPage from '../../types/custom';
+import Head from 'next/head';
+import { getDocument, GlobalWorkerOptions} from 'pdfjs-dist';
+GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.7.107/pdf.worker.min.js';
+
 
 const StudentUploadPage: CustomNextPage = () => {
 
@@ -56,9 +60,12 @@ const StudentUploadPage: CustomNextPage = () => {
         // Read the file as an ArrayBuffer
         const fileBytes = await file.arrayBuffer();
   
+        console.log("filebytes", fileBytes);
         // Convert the ArrayBuffer to a Uint8Array for sending as binary data in the API request
         const fileData = new Uint8Array(fileBytes);
   
+        console.log("filedata", fileData);
+        
         // Call the parse_doc API function with the fileData
         const apiResponse = await parse_doc(fileData);
         console.log('OS API RESPONSE:', apiResponse);
@@ -92,11 +99,41 @@ const StudentUploadPage: CustomNextPage = () => {
         // Update the code, institution, and credits values in the respective states
         setCodeValue(courseNameValue);
         setCreditsValue(creditsValue);
+
+         // Load the PDF document from the bytes
+      const loadingTask = getDocument({ data: fileBytes });
+      console.log('loadingTask:', loadingTask);
+
+      loadingTask.promise
+        .then(async (pdf: { numPages: number; getPage: (arg0: number) => any }) => {
+          console.log('Promise resolved. PDF:', pdf);
+          let fullText = '';
+
+          // Loop through each page and extract text
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+
+            // Extract the text content
+            const content = await page.getTextContent();
+
+            // Combine the text items into a single string
+            const text = content.items.map((item: { str: any }) => item.str).join(' ');
+
+            fullText += text + '\n';
+          }
+
+          console.log('PDF Text:', fullText);
+        })
+        .catch((error: any) => {
+          console.error('Error loading PDF:', error);
+        });
+  
       } catch (error) {
         console.error('Failed to parse document:', error);
       }
     }
-  };
+  }; // Add this closing bracket
+  
   
 
   
@@ -165,6 +202,57 @@ const handleSubmit = async () => {
 
   router.push('../../dashboards/student'); //once they submit request, take student back to dashboard
 };
+
+useEffect(() => {
+  const fetchDocumentUrl = async () => {
+    if (documentId) {
+      const docSnapshot = await getDoc(doc(db, 'syllabiURL', documentId));
+      if (docSnapshot.exists()) {
+        const { fileUrl } = docSnapshot.data();
+        const downloadUrl = await getDownloadURL(ref(storage, fileUrl));
+        console.log('File URL:', downloadUrl);
+
+         // Fetch the bytes of the PDF file
+         const fileRef = ref(storage, fileUrl);
+         const fileBytes = await getBytes(fileRef);
+         console.log('File Bytes:', fileBytes);
+
+           
+   
+         /**To use getBytes() you have to set up CORS configuration in Google cloud
+          * gsutil cors get gs://transfermaster-a871b.appspot.com
+[{"maxAgeSeconds": 3600, "method": ["GET"], "origin": ["*"], "responseHeader": ["Content-Type"]}]
+          */
+          // Load the PDF document from the bytes
+          const loadingTask = getDocument({data: fileBytes});
+          loadingTask.promise.then(async (pdf: { numPages: number; getPage: (arg0: number) => any; }) => {
+              let fullText = "";
+
+              // Loop through each page and extract text
+              for(let i = 1; i <= pdf.numPages; i++) {
+                  const page = await pdf.getPage(i);
+
+                  // Extract the text content
+                  const content = await page.getTextContent();
+
+                  // Combine the text items into a single string
+                  const text = content.items.map((item: { str: any; }) => item.str).join(' ');
+
+                  fullText += text + "\n";
+              }
+
+              console.log('PDF Text:', fullText);
+          });
+
+      
+      
+      
+      }
+    }
+  };
+
+  fetchDocumentUrl();
+}, [documentId]);
 
 
   return (
@@ -263,6 +351,9 @@ const handleSubmit = async () => {
             <Button variant="contained" color="primary" onClick={handleSubmit}>Submit Request</Button>
         </Grid>
       </Grid>
+      <Head>
+        <script src="/pdf.worker.js" />
+      </Head>
     </div>
   );
 };
