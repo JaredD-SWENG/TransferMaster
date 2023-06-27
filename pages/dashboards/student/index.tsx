@@ -35,7 +35,10 @@ import { DocumentReference, Timestamp, collection, doc, getDoc, getDocs, query, 
 import { auth, db } from '../../../config/firebase';
 import DashboardCard from '../../../src/components/shared/DashboardCard';
 import CustomSelect from '../../../src/components/forms/theme-elements/CustomSelect';
-import { useEffect, useState } from 'react';
+import { ReactElement, useEffect, useState } from 'react';
+import CustomNextPage from '../../../types/custom';
+import FullLayout from '../../../src/layouts/full/FullLayout';
+import withRole from '../../../src/components/hocs/withRole';
 
 interface TablePaginationActionsProps {
   count: number;
@@ -111,12 +114,12 @@ interface RequestDisplayType {
   Date: string;
 }
 
-const StudentDashboard = () => {
+const StudentDashboard: CustomNextPage = () => {
   const [requests, setRequests] = useState<RequestDisplayType[]>([]);
   const router = useRouter();
 
   const handleSubmit = () => {
-    router.push('../../comparison/UploadPage');
+    router.push('../../comparison/StudentUploadPage');
   };
 
   useEffect(() => {
@@ -266,5 +269,9 @@ const StudentDashboard = () => {
   );
 };
 
-export default StudentDashboard;
+StudentDashboard.getLayout = function getLayout(page: ReactElement) {
+  return <FullLayout>{page}</FullLayout>;
+};
+
+export default withRole({ Component: StudentDashboard, roles: ['Student'] });
 

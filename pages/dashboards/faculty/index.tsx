@@ -5,6 +5,9 @@ import { Key, ReactElement, JSXElementConstructor, ReactFragment, ReactPortal, u
 import { Router, useRouter } from "next/router";
 import { auth, db } from "../../../config/firebase";
 import { DocumentReference, Timestamp, collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import CustomNextPage from "../../../types/custom";
+import FullLayout from "../../../src/layouts/full/FullLayout";
+import withRole from "../../../src/components/hocs/withRole";
 //Requests collection
 interface RequestType {
   id: string;
@@ -24,7 +27,7 @@ interface RequestDisplayType {
   Date: string;
 }
 
-const FacultyDashboard = () => {
+const FacultyDashboard: CustomNextPage = () => {
   const [requests, setRequests] = useState<RequestDisplayType[]>([]);
 
     const router = useRouter();
@@ -32,7 +35,7 @@ const FacultyDashboard = () => {
     const handleClick = (externalSyllabus: string) => {
       console.log(externalSyllabus)
       router.push({
-        pathname: "../../comparison/SyllabusComparison",
+        pathname: "../../comparison",
         query: { externalSyllabus },
         
       });
@@ -40,7 +43,7 @@ const FacultyDashboard = () => {
 
     //are we using this?
     const handleUploadHistoryClick = () => {
-        router.push('../myUploads')}
+        router.push('../my-uploads')}
 
         useEffect(() => {
           const fetchRequests = async () => {
@@ -144,7 +147,7 @@ const FacultyDashboard = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {requests.map((request) => (
+                        {requests.map((request: { id: any; Requester: any; ExternalSyllabus: any; Status: string; Date: any; ExternalSyllabusPath: string; }) => (
                             <TableRow key={request.id}>
                                 <TableCell>
                                     <Stack direction="row" spacing={2}>
@@ -223,4 +226,7 @@ async function callLambdaFunction() {
     console.log(data);
   }
 
-export default FacultyDashboard;
+FacultyDashboard.getLayout = function getLayout(page: ReactElement) {
+    return <FullLayout>{page}</FullLayout>;
+};
+export default withRole({ Component: FacultyDashboard, roles: ['Reviewer'] });

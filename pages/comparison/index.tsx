@@ -1,6 +1,10 @@
+import { ReactElement } from "react";
+import CustomNextPage from "../../types/custom";
 import SyllabusComparison from "./SyllabusComparison"
+import FullLayout from "../../src/layouts/full/FullLayout";
+import withRole from "../../src/components/hocs/withRole";
 
-const Comparison = () => {
+const Comparison: CustomNextPage = () => {
     return (
         <SyllabusComparison 
             course="MATH 141" 
@@ -11,4 +15,8 @@ const Comparison = () => {
     );
 };
 
-export default Comparison;
+Comparison.getLayout = function getLayout(page: ReactElement) {
+    return <FullLayout>{page}</FullLayout>;
+};
+
+export default withRole({ Component: Comparison, roles: ['Reviewer', 'Transfer Specialist'] });

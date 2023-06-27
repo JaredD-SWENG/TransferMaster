@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { ReactElement, useEffect, useState } from "react";
 import { DocumentReference, collection, getDoc, getDocs, updateDoc, doc, query, where } from "firebase/firestore";
 import { db } from "../../../config/firebase";
 import { MenuItem, TableContainer, Table, TableHead, TableRow, TableCell, Typography, TableBody, Stack, Box, Chip } from "@mui/material";
@@ -6,6 +6,10 @@ import CustomSelect from "../../../src/components/forms/theme-elements/CustomSel
 import DashboardCard from "../../../src/components/shared/DashboardCard";
 import { Timestamp } from "firebase/firestore";
 import { auth } from '../../../config/firebase';
+import CustomNextPage from "../../../types/custom";
+import FullLayout from "../../../src/layouts/full/FullLayout";
+import withRole from "../../../src/components/hocs/withRole";
+import { useRouter } from "next/router";
 
 // db collection schemas
 
@@ -34,10 +38,11 @@ interface FacultyType {
   syllabus: string[];
 }
 
-const TransferSpecialistDashboard = () => {
+const TransferSpecialistDashboard: CustomNextPage = () => {
   const [requests, setRequests] = useState<RequestDisplayType[]>([]);
   const [selectedFaculty, setSelectedFaculty] = useState<{ [key: string]: string | '' }>({});
   const [faculty, setFaculty] = useState<FacultyType[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
 
@@ -138,7 +143,11 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
 };
 
 
-
+  function handleClick() {
+    return (
+        router.push('../../comparison/')
+    );
+  };
   
   
 
@@ -188,7 +197,7 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
           <TableBody>
             {requests.map((request) => (
               <TableRow key={request.id}>
-                <TableCell>
+                <TableCell onClick={handleClick}>
                   <Typography variant="subtitle2" fontWeight={600}>
                     {request.Requester}
                   </Typography>
@@ -254,4 +263,8 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
   );
 };
 
-export default TransferSpecialistDashboard;
+TransferSpecialistDashboard.getLayout = function getLayout(page: ReactElement) {
+  return <FullLayout>{page}</FullLayout>;
+};
+
+export default withRole({ Component: TransferSpecialistDashboard, roles: ['Transfer Specialist'] });

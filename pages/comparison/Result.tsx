@@ -1,6 +1,6 @@
 import PageContainer from "../../src/components/container/PageContainer";
 import dynamic from "next/dynamic";
-import React, { useState } from 'react';
+import React, { ReactElement, useState } from 'react';
 import {
     Button,
     Box,
@@ -16,6 +16,9 @@ import {
 } from '@mui/material';
 import CustomFormLabel from '../../src/components/forms/theme-elements/CustomFormLabel';
 import { TransitionProps } from '@mui/material/transitions';
+import withRole from "../../src/components/hocs/withRole";
+import FullLayout from "../../src/layouts/full/FullLayout";
+import CustomNextPage from "../../types/custom";
 const DynamicBarChart = dynamic(() => import('./BarChart'), { ssr: false });
 
 const Transition = React.forwardRef(function Transition(
@@ -28,7 +31,7 @@ const Transition = React.forwardRef(function Transition(
 });
 
 //diplay comparison metrics like graph, summary, etc. 
-const Result = () => {
+const Result: CustomNextPage = () => {
     const syllabusComponents : any = {
         score: 73.68,
         learningObjectives: {
@@ -140,4 +143,8 @@ const Result = () => {
     );
 };
 
-export default Result;
+Result.getLayout = function getLayout(page: ReactElement) {
+    return <FullLayout>{page}</FullLayout>;
+};
+
+export default withRole({ Component: Result, roles: ['Reviewer', 'Transfer Specialist'] });

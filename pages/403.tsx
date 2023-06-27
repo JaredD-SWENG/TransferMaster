@@ -3,7 +3,7 @@ import { Box, Container, Typography, Button } from "@mui/material";
 import Link from "next/link";
 import React from "react";
 
-const Error = () => (
+const Error403 = () => (
   <Box
     display="flex"
     flexDirection="column"
@@ -18,13 +18,13 @@ const Error = () => (
         style={{ width: "100%", maxWidth: "500px" }}
       /> */}
       <Typography align="center" variant="h1" mb={4}>
-        404
+        403
       </Typography>
       <Typography align="center" variant="h1" mb={4}>
         Oops!!!
       </Typography>
       <Typography align="center" variant="h4" mb={4}>
-        This page you are looking for could not be found.
+        You do not have access to this page
       </Typography>
       <Button
         color="primary"
@@ -39,5 +39,5 @@ const Error = () => (
   </Box>
 );
 
-Error.layout = "Blank";
-export default Error;
+Error403.layout = "Blank";
+export default Error403;

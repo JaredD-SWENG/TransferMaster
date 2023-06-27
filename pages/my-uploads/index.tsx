@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { ReactElement, useEffect } from 'react';
 import { useDispatch, useSelector } from '../../src/store/Store';
 import { format } from 'date-fns';
 import {
@@ -21,14 +21,17 @@ import {
   Grid,
   Button,
 } from '@mui/material';
-import { fetchTickets, DeleteTicket, SearchTicket, AddTicket } from '../../src/store/apps/tickets/TicketSlice';
+import { fetchTickets, DeleteTicket, SearchTicket } from '../../src/store/apps/tickets/TicketSlice';
 import { IconTrash } from '@tabler/icons-react';
 import { TicketType } from '../../src/types/apps/ticket';
+import CustomNextPage from '../../types/custom';
+import withRole from '../../src/components/hocs/withRole';
+import FullLayout from '../../src/layouts/full/FullLayout';
 
 
 
 
-const TicketListing = () => {
+const MyUploads: CustomNextPage = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
 
@@ -160,4 +163,8 @@ const TicketListing = () => {
   );
 };
 
-export default TicketListing;
+MyUploads.getLayout = function getLayout(page: ReactElement) {
+  return <FullLayout>{page}</FullLayout>;
+};
+
+export default withRole({ Component: MyUploads, roles: ['Reviewer', 'Transfer Specialist'] });

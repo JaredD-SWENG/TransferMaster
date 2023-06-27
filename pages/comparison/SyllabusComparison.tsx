@@ -91,7 +91,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
             setOpen(true);
         } else {
             setDisplayText('Comparison successful!');
-            router.push('./Result');
+            router.push('comparison/Result');
         }
     };
 
