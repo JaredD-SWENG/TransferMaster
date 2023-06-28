@@ -91,13 +91,18 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
    
     const router = useRouter();
   
+    const { requestID } = router.query;
+
     const handleCompare = () => {
         const sum = sliderValues.reduce((a, b) => a + b, 0);
         if (sum !== 100) {
             setOpen(true);
         } else {
             setDisplayText('Comparison successful!');
-            router.push('comparison/Result');
+            router.push({
+                pathname: 'comparison/Result',
+                query: { sliderValues: JSON.stringify(sliderValues), requestID }
+              }); 
         }
     };
 
@@ -111,7 +116,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
         setPsuCourseName(data.course);
         setPsuCredits(data.credits);
 
-        if(data.textbook === null){
+        if(data.textbook == null){
             setPsuTextbook("Not provided")
         }else{
             setPsuTextbook(data.textbook)
@@ -123,7 +128,8 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
 
     useEffect(() => {
         const fetchSyllabusData = async () => {
-          const { externalSyllabus } = router.query;
+          const { externalSyllabus } = router.query; //get the external syllabus from the query
+           //get the id from the query 
           if (externalSyllabus) {
             const syllabusDocRef = doc(db, externalSyllabus as string);
             const syllabusDoc = await getDoc(syllabusDocRef);
@@ -146,7 +152,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                 <Grid item xs={12} lg={6}>
                 <ParentCard title="Penn State">
                 <Box>
-              <UploadPopup onExtractedData={handleExtractedData} />
+              <UploadPopup onExtractedData={handleExtractedData} requestID={requestID}/>
               <SyllabusForm
                 course={psuCourseName}
                 credits={psuCredits}

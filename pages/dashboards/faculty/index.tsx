@@ -32,11 +32,11 @@ const FacultyDashboard: CustomNextPage = () => {
 
     const router = useRouter();
     
-    const handleClick = (externalSyllabus: string) => {
+    const handleClick = (requestID: string, externalSyllabus: string) => {
       console.log(externalSyllabus)
       router.push({
         pathname: "../../comparison",
-        query: { externalSyllabus },
+        query: { requestID, externalSyllabus },
         
       });
     };
@@ -104,7 +104,6 @@ const FacultyDashboard: CustomNextPage = () => {
         <>
         <Grid item xs={12} mt={3} mb={3}>
             <Button variant="contained" color="primary" onClick={handleUploadHistoryClick}>My Uploads</Button>
-            <Button onClick={callLambdaFunction}>Call Lambda Function</Button>
         </Grid>
         <DashboardCard
             title="Requests"
@@ -198,7 +197,7 @@ const FacultyDashboard: CustomNextPage = () => {
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
-                                    <Button variant="outlined" onClick={() => handleClick(request.ExternalSyllabusPath)}>
+                                    <Button variant="outlined" onClick={() => handleClick(request.id, request.ExternalSyllabusPath)}>
                                         Review
                                     </Button>
                                 </TableCell>
@@ -211,20 +210,6 @@ const FacultyDashboard: CustomNextPage = () => {
     );
 };
 
-async function callLambdaFunction() {
-    const response = await fetch('https://e5vsx4lon0.execute-api.us-east-1.amazonaws.com/prod', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        num1: 421,
-        num2: 2
-      })
-    })
-    const data = await response.json();
-    console.log(data);
-  }
 
 FacultyDashboard.getLayout = function getLayout(page: ReactElement) {
     return <FullLayout>{page}</FullLayout>;

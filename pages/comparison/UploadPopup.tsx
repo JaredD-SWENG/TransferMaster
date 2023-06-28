@@ -12,6 +12,9 @@ import {
 import { TransitionProps } from '@mui/material/transitions';
 import axios from 'axios';
 import { getDocument, GlobalWorkerOptions} from 'pdfjs-dist';
+import { ref, uploadBytes } from 'firebase/storage';
+import { db, storage } from '../../config/firebase';
+import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
 GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.7.107/pdf.worker.min.js';
 
 // Syllabus extracted sections - to be extracted by OS Parser
@@ -23,6 +26,7 @@ interface SyllabusProps {
 }
 
 interface UploadPopupProps {
+  requestID: string | string[] | undefined;
   onExtractedData: (data: SyllabusProps) => void;
 }
 
@@ -36,9 +40,9 @@ const Transition = React.forwardRef(function Transition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData }) => {
+const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
-  
+  const [documentId, setDocumentId] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [courseNameValue, setCodeValue] = useState<string>('');
   const [creditsValue, setCreditsValue] = useState<string>('');
@@ -156,6 +160,46 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData }) => {
          }
 
          console.log('PDF Text:', fullText);
+
+        //  //file upload to firebase
+
+         try{
+
+           //Create a reference to firebase storage and store the uploaded file in /uploads 
+            const storageRef = ref(storage, 'uploads/' + file.name);
+            await uploadBytes(storageRef, file);
+
+            //Store the uploaded syllabus's path in /SyllabiURL
+            const docRef = await addDoc(collection(db, 'SyllabiURL'), { fileUrl: storageRef.fullPath });
+            setDocumentId(docRef.id);
+            console.log('File uploaded successfully!');
+
+
+            //Store the extracted sections and user-enetered fields in /Syllabi
+            const syllabiDoc = {
+              InstitutionName: institutionValue,
+              CourseName: courseNameValue,
+              Credits: Number(creditsValue),
+              CourseCategory: "courseCategoryValue",
+              TermType: "Semester",
+              SyllabusURL: doc(db, 'SyllabiURL', docRef.id)
+            }
+
+            const syllabiRef = await addDoc(collection(db, 'Syllabi'), syllabiDoc);
+            console.log('Syllabus data stored successfully!');
+
+            //here
+            let requestDocRef = doc(db, 'Requests', requestID as string); // Replace 'YourCollectionName' with your actual collection name
+
+            updateDoc(requestDocRef, {
+                PSUSyllabus: doc(db, 'Syllabi', syllabiRef.id) // Replace 'YourPSUSyllabusCollectionName' with your actual PSUSyllabus collection name
+            });
+
+
+
+          } catch (error) {
+            console.error('Failed to upload file:', error);
+          }
        })
        .catch((error: any) => {
         console.error('Error loading PDF:', error);
