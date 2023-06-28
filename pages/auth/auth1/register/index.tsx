@@ -53,7 +53,8 @@ const Register = () => (
               alt="bg"
               style={{
                 width: "100%",
-                maxWidth: "500px",
+                maxWidth: "600px",
+                borderRadius: '25px',
               }}
             />
           </Box>

@@ -73,7 +73,15 @@ const LandingPage = () => {
                                     }}
                                     >
                                         <Typography variant="h5" fontWeight={300}>
-                                            TransferMaster speeds up the transfer credit process with AI 
+                                        We understand the hurdles faced by transfer students and higher education institutions 
+                                        when it comes to evaluating transfer credits. That's why we've developed an AI-powered assistive tool 
+                                        that streamlines the transfer credit evaluation process. TransferMaster leverages AI to extract key
+                                         data from syllabi, compares them to determine course equivalency, and provides comprehensive 
+                                         analysis reports. With TransferMaster, students can easily upload their external syllabi and 
+                                         receive timely updates on their transfer requests. Faculty reviewers can make data-driven 
+                                         decisions using our AI comparison tool. Our solution reduces delays, financial 
+                                         burdens, frustration, and stress, while providing students with access to resources for informed 
+                                         decisions. Join us in simplifying the transfer credit process with TransferMaster!
                                         </Typography>
                                     </motion.div>
                                 </Box>
@@ -99,7 +107,18 @@ const LandingPage = () => {
                             </Box>
                         </Grid>
                         <Grid item xs={12} lg={6} sm={4}>
+                        <motion.div
+                                    initial={{ opacity: 0, translateY: 550 }}
+                                    animate={{ opacity: 1, translateY: 0 }}
+                                    transition={{
+                                    type: 'spring',
+                                    stiffness: 150,
+                                    damping: 30,
+                                    delay: 0.4,
+                                    }}
+                                >
                             <ImageCarousel images={images} interval={3000} />
+                            </motion.div>
                         </Grid>
                     </Grid>
                 </Container>

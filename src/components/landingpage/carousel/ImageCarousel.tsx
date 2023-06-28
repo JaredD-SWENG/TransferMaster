@@ -24,7 +24,8 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, interval }) => {
                 alt="carousel" 
                 style={{ 
                     maxWidth: '100%', 
-                    height: 'auto' 
+                    height: 'auto',
+                    borderRadius: '25px',
                 }}
             />
         </Box>
