@@ -1,50 +1,173 @@
-import { 
-    Button,
-    Box,
-    Dialog,
-    DialogTitle,
-    Slide,
-    DialogActions,
-    Grid,
-    Input} from "@mui/material";
-import React, { ReactElement } from "react";
-import { useRouter } from "next/router";
+import React, { ChangeEvent, useState } from 'react';
+import {
+  Button,
+  Box,
+  Dialog,
+  DialogTitle,
+  Slide,
+  DialogActions,
+  Grid,
+  Input,
+} from '@mui/material';
 import { TransitionProps } from '@mui/material/transitions';
-import CustomNextPage from "../../types/custom";
-import withRole from "../../src/components/hocs/withRole";
-import FullLayout from "../../src/layouts/full/FullLayout";
+import axios from 'axios';
+import { getDocument, GlobalWorkerOptions} from 'pdfjs-dist';
+GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.7.107/pdf.worker.min.js';
 
-//Syllabus extracted sections - to be extracted by OS Parser 
+// Syllabus extracted sections - to be extracted by OS Parser
 interface SyllabusProps {
-    course: string;
-    credits: number;
-    textbook: string;
-    learningObjectives: string[];
+  course: string;
+  credits: number;
+  textbook: string;
+  learningObjectives: string[];
 }
-{/**Transitions */}
+
+interface UploadPopupProps {
+  onExtractedData: (data: SyllabusProps) => void;
+}
+
+// Transitions
 const Transition = React.forwardRef(function Transition(
-    props: TransitionProps & {
-      children: React.ReactElement<any, any>;
-    },
-    ref: React.Ref<unknown>,
-  ) {
-    return <Slide direction="up" ref={ref} {...props} />;
-  });
-  
-  
-const UploadPopup: CustomNextPage = () => {
-  const router = useRouter();
+  props: TransitionProps & {
+    children: React.ReactElement<any, any>;
+  },
+  ref: React.Ref<unknown>
+) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
 
-
-  const handleExistingFilBtn = () => {
-      router.push('/my-uploads')
-  };
-
-  {/** */}
+const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
+  
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [courseNameValue, setCodeValue] = useState<string>('');
+  const [creditsValue, setCreditsValue] = useState<string>('');
+  const [institutionValue, setInstitutionValue] = useState<string>('');
+  const [textbook, setTextbook] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleUploadBtnClick = (event: any) => {
     setAnchorEl(event.currentTarget);
+   
+  };
+
+  // OS Parser API call
+  async function parse_doc(data: any) {
+    const api_token = '9c263dc72cfcf24432a1ae9acdab709c55ba14f4';
+    const response = await axios.post(
+      'https://parser-api.opensyllabus.org/v1/',
+      data,
+      {
+        headers: {
+          Authorization: `Token ${api_token}`,
+        },
+      }
+    );
+    return response.data;
+  }
+
+  const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    setSelectedFile(file);
+
+    if (file) {
+      try {
+        setLoading(true);
+
+        // Read the file as an ArrayBuffer
+        const fileBytes = await file.arrayBuffer();
+
+        // Convert the ArrayBuffer to a Uint8Array for sending as binary data in the API request
+        const fileData = new Uint8Array(fileBytes);
+
+        // Call the parse_doc API function with the fileData
+        const apiResponse = await parse_doc(fileData);
+        console.log('OS API RESPONSE:', apiResponse);
+
+        // Get the extracted data from the response
+        const { extracted_sections, institution } = apiResponse.data;
+        const courseNameHolder = extracted_sections.code;
+        const creditsHolder = extracted_sections.credits;
+        const institutionName = institution ? institution.name : '';
+        const textbook = extracted_sections.textbook;
+        // Initialize the relevant variables
+        let courseNameValue = '';
+        let institutionValue = '';
+        let creditsValue = '';
+        let textbookValue = '';
+
+        if (courseNameHolder && courseNameHolder.length > 0) {
+          courseNameValue = courseNameHolder[0].text;
+        }
+
+        if (institutionName) {
+          institutionValue = institutionName;
+        }
+
+        if (creditsHolder && creditsHolder.length > 0) {
+          creditsValue = creditsHolder[0].text;
+        }
+
+        if (textbook) {
+          textbookValue = textbook;
+        }
+
+        console.log("textbook:" , textbookValue)
+
+        // Update the institutionValue state to display in the CustomFormLabel
+        setInstitutionValue(institutionValue);
+
+        // Update the code, institution, and credits values in the respective states
+        setCodeValue(courseNameValue);
+        setCreditsValue(creditsValue);
+        setTextbook(textbookValue);
+        // Create the extracted data object
+        const extractedData: SyllabusProps = {
+          course: courseNameValue,
+          credits: parseFloat(creditsValue),
+          textbook: textbookValue, // Add the extracted textbook here
+          learningObjectives: [], // Add the extracted learning objectives here
+        };
+
+        // Call the onExtractedData callback function with the extracted data
+        onExtractedData(extractedData);
+
+        
+        // Load the PDF document from the bytes
+       const loadingTask = getDocument({ data: fileBytes });
+       console.log('loadingTask:', loadingTask);
+
+       loadingTask.promise
+       .then(async (pdf: { numPages: number; getPage: (arg0: number) => any }) => {
+         console.log('Promise resolved. PDF:', pdf);
+         let fullText = '';
+
+         // Loop through each page and extract text
+         for (let i = 1; i <= pdf.numPages; i++) {
+           const page = await pdf.getPage(i);
+
+           // Extract the text content
+           const content = await page.getTextContent();
+
+           // Combine the text items into a single string
+           const text = content.items.map((item: { str: any }) => item.str).join(' ');
+
+           fullText += text + '\n';
+         }
+
+         console.log('PDF Text:', fullText);
+       })
+       .catch((error: any) => {
+        console.error('Error loading PDF:', error);
+      });
+        handleClose();  // Close the popup here
+        
+      } catch (error) {
+        console.error('Failed to parse document:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   const handleClose = () => {
@@ -55,12 +178,16 @@ const UploadPopup: CustomNextPage = () => {
   const id = open ? 'simple-popover' : undefined;
 
   return (
-      <Box>
+    <Box>
       <Grid mb={4}>
-      <Button variant="contained" component="span" onClick={handleUploadBtnClick}>
-      Upload File
-      </Button>
-      <Dialog
+        <Button
+          variant="contained"
+          component="span"
+          onClick={handleUploadBtnClick}
+        >
+          Upload File
+        </Button>
+        <Dialog
           open={open}
           TransitionComponent={Transition}
           keepMounted
@@ -68,61 +195,52 @@ const UploadPopup: CustomNextPage = () => {
           fullWidth
           aria-labelledby="alert-dialog-slide-title"
           aria-describedby="alert-dialog-slide-description"
-                      >
+        >
           <DialogTitle id="alert-dialog-slide-title" variant="h5">
-          Upload File
+            Upload File
           </DialogTitle>
-          {/** Anything on the dialog box should be in result.tsx page */}
           <Grid m={4}>
-          <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
-          <Grid m={4}>
-              <Input
-                  type="file"
-                  style={{ display: 'none' }}
-                  id="file-upload"
-              />
-              <label htmlFor="file-upload">
-                  <Button variant="contained" component="span">
-                  Upload New
-                  </Button>
-              </label>
-              </Grid>
-              </Box> 
-              
-              <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
-              <Grid m={2}>
-                      or
-              
-              </Grid>
-              </Box>
-
-
-
-              <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
+            <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
               <Grid m={4}>
-              <Button onClick={handleExistingFilBtn} color="secondary" variant="contained">
-                  Choose from existing files
-              </Button>
-      </Grid>
-      </Box>
-              
-              
-              
-          </Grid>
-          
+                {loading ? (
+                  <p>Loading...</p>
+                ) : (
+                  <>
+                    <Input
+                      type="file"
+                      style={{ display: 'none' }}
+                      id="file-upload"
+                      onChange={handleFileSelect}
+                    />
+                    <label htmlFor="file-upload">
+                      <Button variant="contained" component="span">
+                        Upload New
+                      </Button>
+                    </label>
+                  </>
+                )}
+              </Grid>
+            </Box>
 
-      {/**Upload Btn Actions */}
-          <DialogActions>
-          
-          </DialogActions>
-      </Dialog>
+            <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
+              <Grid m={2}>or</Grid>
+            </Box>
+
+            <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
+              <Grid m={4}>
+                <Button color="secondary" variant="contained">
+                  Choose from existing files
+                </Button>
+              </Grid>
+            </Box>
+          </Grid>
+
+          {/**Upload Btn Actions */}
+          <DialogActions></DialogActions>
+        </Dialog>
       </Grid>
-      </Box>  
+    </Box>
   );
 };
 
-UploadPopup.getLayout = function getLayout(page: ReactElement) {
-    return <FullLayout>{page}</FullLayout>;
-};
-
-export default withRole({ Component: UploadPopup, roles: ['Reviewer', 'Transfer Specialist'] });
+export default UploadPopup;
