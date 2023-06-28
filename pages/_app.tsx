@@ -51,7 +51,7 @@ const MyApp = (props: MyAppProps) => {
     <CacheProvider value={emotionCache}>
       <Head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
-        <title>Modernize NextJs Admin template</title>
+        <title>TransferMaster</title>
       </Head>
       <ThemeProvider theme={theme}>
         <RTL direction={customizer.activeDir}>

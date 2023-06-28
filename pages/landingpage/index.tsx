@@ -3,11 +3,20 @@ import PageContainer from "../../src/components/container/PageContainer"
 import LpHeader from "../../src/components/landingpage/header/Header";
 import { IconRocket } from "@tabler/icons-react";
 import { motion } from "framer-motion";
+import ImageCarousel from "../../src/components/landingpage/carousel/ImageCarousel";
 
 const StyledButton = styled(Button)(() => ({
     padding: '13px 48px',
     fontSize: '16px',
 }));
+
+const images: string[] = [
+    "/images/landingpage/carousel.png",
+    "/images/landingpage/carousel2.png",
+    "/images/landingpage/carousel3.png",
+    "/images/landingpage/carousel4.png",
+    
+];
 
 const LandingPage = () => {
     const lgDown = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'));
@@ -19,7 +28,7 @@ const LandingPage = () => {
                 <Container maxWidth="lg">
                     <Grid container spacing={3} alignItems="center">
                         <Grid item xs={12} lg={6} sm={8}>
-                            <Box mt={lgDown ? 8 : 0} sx={{spacing:'0', justifyContent:"center" }}>
+                        <Box mt={lgDown ? 8 : 0} sx={{spacing:'0', justifyContent:"center" }}>
                                 <motion.div
                                     initial={{ opacity: 0, translateY: 550 }}
                                     animate={{ opacity: 1, translateY: 0 }}
@@ -64,7 +73,15 @@ const LandingPage = () => {
                                     }}
                                     >
                                         <Typography variant="h5" fontWeight={300}>
-                                            TransferMaster speeds up the transfer credit process with AI 
+                                        We understand the hurdles faced by transfer students and higher education institutions 
+                                        when it comes to evaluating transfer credits. That's why we've developed an AI-powered assistive tool 
+                                        that streamlines the transfer credit evaluation process. TransferMaster leverages AI to extract key
+                                         data from syllabi, compares them to determine course equivalency, and provides comprehensive 
+                                         analysis reports. With TransferMaster, students can easily upload their external syllabi and 
+                                         receive timely updates on their transfer requests. Faculty reviewers can make data-driven 
+                                         decisions using our AI comparison tool. Our solution reduces delays, financial 
+                                         burdens, frustration, and stress, while providing students with access to resources for informed 
+                                         decisions. Join us in simplifying the transfer credit process with TransferMaster!
                                         </Typography>
                                     </motion.div>
                                 </Box>
@@ -88,6 +105,20 @@ const LandingPage = () => {
                                     </Stack>
                                 </motion.div>
                             </Box>
+                        </Grid>
+                        <Grid item xs={12} lg={6} sm={4}>
+                        <motion.div
+                                    initial={{ opacity: 0, translateY: 550 }}
+                                    animate={{ opacity: 1, translateY: 0 }}
+                                    transition={{
+                                    type: 'spring',
+                                    stiffness: 150,
+                                    damping: 30,
+                                    delay: 0.4,
+                                    }}
+                                >
+                            <ImageCarousel images={images} interval={3000} />
+                            </motion.div>
                         </Grid>
                     </Grid>
                 </Container>

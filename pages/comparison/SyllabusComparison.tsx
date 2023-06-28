@@ -26,6 +26,7 @@ import { TransitionProps } from '@mui/material/transitions';
 import Result from "./Result";
 import ChildCard from "../../src/components/shared/ChildCard";
 import UploadPopup from "./UploadPopup";
+
 //Syllabus extracted sections - to be extracted by OS Parser 
 interface SyllabusProps {
     course: string;
@@ -70,19 +71,38 @@ const SyllabusForm: React.FC<SyllabusProps> = ({ course, credits, textbook, lear
 {/**SyllabusComparison */}
 const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook, learningObjectives}) => {
     const [displayText, setDisplayText] = useState('');
+  
     const [extCourseName, setExtCourseName] = useState("");
     const [extCredits, setExtCredits] = useState(0);
     const [extTextbook, setExtTextbook ] = useState('');
-
-
+        
     const [psuCourseName, setPsuCourseName] = useState("");
     const [psuCredits, setPsuCredits] = useState(0);
     const [psuTextbook, setPsuTextbook ] = useState('');
+
+    const [sliderValues, setSliderValues] = useState([0, 0, 0]); // Initialize slider values
+    const [open, setOpen] = useState(false); // Initialize dialog open state
+
+    const handleSliderChange = (index: number) => (event: any, newValue: number | number[]) => {
+        const newSliderValues = [...sliderValues];
+        newSliderValues[index] = newValue as number;
+        setSliderValues(newSliderValues);
+    };
+   
     const router = useRouter();
   
     const handleCompare = () => {
-        setDisplayText('Comparison successful!');
-        router.push('comparison/Result')
+        const sum = sliderValues.reduce((a, b) => a + b, 0);
+        if (sum !== 100) {
+            setOpen(true);
+        } else {
+            setDisplayText('Comparison successful!');
+            router.push('comparison/Result');
+        }
+    };
+
+    const handleClose = () => {
+        setOpen(false);
     };
 
     const handleExtractedData = (data: { course: any; credits: React.SetStateAction<number>; textbook: any; learningObjectives: any; }) => {
@@ -145,13 +165,16 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
             <Grid item xs={12} lg={16}>
                 <Box display={'flex'} flexDirection={'row'} alignItems={'center'} gap={5}>
                     <Box display={'flex'} justifyContent={'flex-start'} alignItems={'center'} flex={1}>
-                        <CustomRangeSlider />
+                    <Typography>{sliderValues[0]}</Typography>
+                        <CustomRangeSlider min={0} max={100} step={5} value={sliderValues[0]} onChange={handleSliderChange(0)} />
                     </Box>
                     <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
-                        <CustomRangeSlider />
+                    <Typography>{sliderValues[1]}</Typography>
+                        <CustomRangeSlider min={0} max={100} step={5} value={sliderValues[1]} onChange={handleSliderChange(1)} />
                     </Box>
                     <Box display={'flex'} justifyContent={'flex-end'} alignItems={'center'} flex={1}>
-                        <CustomRangeSlider />
+                    <Typography>{sliderValues[2]}</Typography>
+                        <CustomRangeSlider min={0} max={100} step={5} value={sliderValues[2]} onChange={handleSliderChange(2)} />
                     </Box>
                 </Box>
             </Grid>
@@ -183,6 +206,19 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
             <Grid item xs={12} display="flex" justifyContent="center" alignItems="center">
                 {displayText && <Card>{displayText}</Card>}
             </Grid>
+            <Dialog open={open} onClose={handleClose}>
+                <DialogTitle>{"Error"}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        The sum of all slider values must be exactly 1.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleClose} color="primary">
+                        OK
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Grid>
       </PageContainer>
     );
