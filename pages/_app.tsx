@@ -26,6 +26,8 @@ import "../src/components/landingpage/demo-slider/demo-slider.css";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
+
+
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
 
@@ -67,6 +69,6 @@ const MyApp = (props: MyAppProps) => {
 
 export default (props: MyAppProps) => (
   <Provider store={Store}>
-    <MyApp {...props} />
+        <MyApp {...props} />
   </Provider>
 );

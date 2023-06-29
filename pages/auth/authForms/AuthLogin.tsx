@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   Box,
   Typography,
@@ -20,6 +20,7 @@ import AuthSocialButtons from "./AuthSocialButtons";
 import { SetStateAction, Dispatch } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
+
 
 interface GetUserRoleByEmailProps {
   db: any;
@@ -45,6 +46,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+
 
   const handleLogin = async () => {
     try {

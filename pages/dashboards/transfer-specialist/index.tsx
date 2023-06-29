@@ -107,15 +107,17 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
 
 // handle the assignment feature
 const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ value: unknown }>) => {
-  setSelectedFaculty({
-    ...selectedFaculty,
-    [requestId]: event.target.value as string | '',
-  });
+  
 
   // Fetch the document ID of the selected reviewer from the Users collection
   const reviewerName = event.target.value as string;
   const usersCollection = collection(db, "Users");
   const querySnapshot = await getDocs(query(usersCollection, where("Name", "==", reviewerName)));
+
+  setSelectedFaculty({
+    ...selectedFaculty,
+    [requestId]: reviewerName,
+  });
 
   if (!querySnapshot.empty) {
     let reviewerDocId = null;
@@ -214,7 +216,7 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
                     size="small"
                   >
                     {faculty.map((facultyMember) => (
-                      <MenuItem key={facultyMember.id} value={facultyMember.id}>
+                      <MenuItem key={facultyMember.id} value={facultyMember.name}>
                         {facultyMember.name}
                       </MenuItem>
                     ))}
