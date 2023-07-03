@@ -1,7 +1,7 @@
 import { ReactElement, useEffect, useState } from "react";
 import { DocumentReference, collection, getDoc, getDocs, updateDoc, doc, query, where } from "firebase/firestore";
 import { db } from "../../../config/firebase";
-import { MenuItem, TableContainer, Table, TableHead, TableRow, TableCell, Typography, TableBody, Stack, Box, Chip } from "@mui/material";
+import { MenuItem, TableContainer, Table, TableHead, TableRow, TableCell, Typography, TableBody, Stack, Box, Chip, Grid } from "@mui/material";
 import CustomSelect from "../../../src/components/forms/theme-elements/CustomSelect";
 import DashboardCard from "../../../src/components/shared/DashboardCard";
 import { Timestamp } from "firebase/firestore";
@@ -10,6 +10,7 @@ import CustomNextPage from "../../../types/custom";
 import FullLayout from "../../../src/layouts/full/FullLayout";
 import withRole from "../../../src/components/hocs/withRole";
 import { useRouter } from "next/router";
+import FilterUITCS from "../../filterUI/FilterUITCS";
 
 // db collection schemas
 
@@ -157,15 +158,9 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
     <DashboardCard
       title="Requests"
       action={
-        <CustomSelect
-          labelId="month-dd"
-          id="month-dd"
-          size="small"
-        >
-          <MenuItem value={1}>March 2023</MenuItem>
-          <MenuItem value={2}>April 2023</MenuItem>
-          <MenuItem value={3}>May 2023</MenuItem>
-        </CustomSelect>
+        <Grid >               
+          <FilterUITCS/> 
+        </Grid>
       }
     >
       <TableContainer>
@@ -182,6 +177,9 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
               </TableCell>
               <TableCell>
                 <Typography variant="subtitle2" fontWeight={600}>Syllabus</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="subtitle2" fontWeight={600}>Course Category</Typography>
               </TableCell>
               <TableCell>
                 <Typography variant="subtitle2" fontWeight={600}>Assigned</Typography>
@@ -205,6 +203,11 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
                 <TableCell>
                   <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
                     {request.ExternalSyllabus}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
+                    Course Category
                   </Typography>
                 </TableCell>
                 <TableCell>
