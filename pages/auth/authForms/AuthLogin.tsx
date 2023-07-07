@@ -1,5 +1,4 @@
-
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, KeyboardEvent } from 'react';
 import {
   Box,
   Typography,
@@ -47,7 +46,6 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   const [error, setError] = useState("");
   const router = useRouter();
 
-
   const handleLogin = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -57,7 +55,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         router.push("/dashboards/student");
       } else if (role === "Transfer Specialist") {
         router.push("/dashboards/transfer-specialist");
-      } else if(role === "Reviewer") {
+      } else if (role === "Reviewer") {
         router.push("/dashboards/faculty");
       }
     } catch (error) {
@@ -69,6 +67,12 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     }
   };
 
+ const handleKeyPress = (event: KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      handleLogin();
+    }
+  };
+
   return (
     <>
       {title && (
@@ -76,24 +80,6 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
           {title}
         </Typography>
       )}
-
-      {/* {subtext}
-
-      <AuthSocialButtons title="Sign in with" />
-      <Box mt={3}>
-        <Divider>
-          <Typography
-            component="span"
-            color="textSecondary"
-            variant="h6"
-            fontWeight="400"
-            position="relative"
-            px={2}
-          >
-            or sign in with
-          </Typography>
-        </Divider>
-      </Box> */}
 
       <Stack>
         <Box>
@@ -103,7 +89,8 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
             variant="outlined"
             fullWidth
             value={email}
-            onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setEmail(e.target.value)}
+            onChange={(e: { target: { value: React.SetStateAction<string> } }) => setEmail(e.target.value)}
+            onKeyPress={handleKeyPress}
           />
         </Box>
         <Box>
@@ -114,7 +101,8 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
             variant="outlined"
             fullWidth
             value={password}
-            onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setPassword(e.target.value)}
+            onChange={(e: { target: { value: React.SetStateAction<string> } }) => setPassword(e.target.value)}
+            onKeyPress={handleKeyPress}
           />
         </Box>
         <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
