@@ -149,7 +149,7 @@ const StudentDashboard: CustomNextPage = () => {
       
             // Convert the 'Date' object to a readable format
             const timestamp = requestData.Date as unknown as Timestamp;
-            const date = timestamp.toDate().toLocaleDateString();
+            const date = timestamp ? timestamp.toDate().toLocaleDateString(): '';
       
             // Fetch the ExternalSyllabus document
             const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);

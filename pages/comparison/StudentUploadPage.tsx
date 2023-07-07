@@ -44,6 +44,7 @@ const StudentUploadPage: CustomNextPage = () => {
   const [courseCategoryValue, setCourseCategoryValue] = useState<string>('');
   const [termTypeValue, setTermTypeValue] = useState<string>('');
   const [gradeValue, setGradeValue] = useState<string>('');
+  const [isFormComplete, setIsFormComplete] = useState(false);
   const router = useRouter();
 
   const handleTermChange = (value: string) => {
@@ -135,7 +136,21 @@ const StudentUploadPage: CustomNextPage = () => {
   }; // Add this closing bracket
   
   
-
+  const checkFormCompletion = () => {
+    if (
+      institutionValue &&
+      courseNameValue &&
+      creditsValue &&
+      courseCategoryValue &&
+      termTypeValue &&
+      gradeValue &&
+      selectedFile
+    ) {
+      setIsFormComplete(true);
+    } else {
+      setIsFormComplete(false);
+    }
+  };
   
 
  //File upload to firebase   
@@ -202,6 +217,18 @@ const handleSubmit = async () => {
 
   router.push('../../dashboards/student'); //once they submit request, take student back to dashboard
 };
+
+useEffect(() => {
+  checkFormCompletion();
+}, [
+  institutionValue,
+  courseNameValue,
+  creditsValue,
+  courseCategoryValue,
+  termTypeValue,
+  gradeValue,
+  selectedFile,
+]);
 
 useEffect(() => {
   const fetchDocumentUrl = async () => {
@@ -348,7 +375,14 @@ useEffect(() => {
         
         {/* 9 */}
         <Grid item xs={12} mt={3}>
-            <Button variant="contained" color="primary" onClick={handleSubmit}>Submit Request</Button>
+        <Button
+  variant="contained"
+  color="primary"
+  disabled={!isFormComplete}
+  onClick={handleSubmit}
+>
+  Submit
+</Button>
         </Grid>
       </Grid>
       <Head>

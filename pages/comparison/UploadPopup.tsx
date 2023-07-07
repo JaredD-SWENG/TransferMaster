@@ -23,6 +23,7 @@ interface SyllabusProps {
   credits: number;
   textbook: string;
   learningObjectives: string[];
+  fullText: string;
 }
 
 interface UploadPopupProps {
@@ -125,16 +126,7 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID })
         setCodeValue(courseNameValue);
         setCreditsValue(creditsValue);
         setTextbook(textbookValue);
-        // Create the extracted data object
-        const extractedData: SyllabusProps = {
-          course: courseNameValue,
-          credits: parseFloat(creditsValue),
-          textbook: textbookValue, // Add the extracted textbook here
-          learningObjectives: [], // Add the extracted learning objectives here
-        };
-
-        // Call the onExtractedData callback function with the extracted data
-        onExtractedData(extractedData);
+      
 
         
         // Load the PDF document from the bytes
@@ -159,7 +151,19 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID })
            fullText += text + '\n';
          }
 
-         console.log('PDF Text:', fullText);
+         //console.log('PDF Text:', fullText);
+
+           // Create the extracted data object
+        const extractedData: SyllabusProps = {
+          course: courseNameValue,
+          credits: parseFloat(creditsValue),
+          textbook: textbookValue, // Add the extracted textbook here
+          learningObjectives: [], // Add the extracted learning objectives here
+          fullText: fullText,
+        };
+
+        // Call the onExtractedData callback function with the extracted data
+        onExtractedData(extractedData);
 
         //  //file upload to firebase
 
@@ -191,9 +195,10 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID })
             //here
             let requestDocRef = doc(db, 'Requests', requestID as string); // Replace 'YourCollectionName' with your actual collection name
 
-            updateDoc(requestDocRef, {
+            await updateDoc(requestDocRef, {
                 PSUSyllabus: doc(db, 'Syllabi', syllabiRef.id) // Replace 'YourPSUSyllabusCollectionName' with your actual PSUSyllabus collection name
             });
+            console.log('Request updated successfully!');
 
 
 
