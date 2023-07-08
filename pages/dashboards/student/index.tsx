@@ -140,7 +140,7 @@ const StudentDashboard: CustomNextPage = () => {
       const q = query(requestsCollection, where('Requester', '==', userId ? doc(db, 'Users', userId) : null));
   
       // Listen for real-time updates
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const unsubscribe: () => void = onSnapshot(q, (querySnapshot) => {
         const processSnapshot = async () => {
           const fetchedRequests: RequestDisplayType[] = [];
       
@@ -227,7 +227,7 @@ const StudentDashboard: CustomNextPage = () => {
                   </Typography>
                 </TableCell>
                 <TableCell>
-                  <Chip
+                <Chip
                     sx={{
                       bgcolor:
                         request.Status === 'To-do'
@@ -237,7 +237,7 @@ const StudentDashboard: CustomNextPage = () => {
                           : request.Status === 'Approved'
                           ? (theme) => theme.palette.success.light
                           : request.Status === 'Rejected'
-                          ? (theme) => theme.palette.info.light
+                          ? (theme) => theme.palette.error.light
                           : (theme) => theme.palette.secondary.light,
                       color:
                         request.Status === 'To-do'
@@ -247,7 +247,7 @@ const StudentDashboard: CustomNextPage = () => {
                           : request.Status === 'Approved'
                           ? (theme) => theme.palette.success.main
                           : request.Status === 'Rejected'
-                          ? (theme) => theme.palette.info.main
+                          ? (theme) => theme.palette.error.main
                           : (theme) => theme.palette.secondary.main,
                       borderRadius: '8px',
                     }}
