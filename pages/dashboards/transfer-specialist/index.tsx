@@ -1,7 +1,7 @@
 import { ReactElement, useEffect, useState } from "react";
-import { DocumentReference, collection, getDoc, getDocs, updateDoc, doc, query, where } from "firebase/firestore";
+import { DocumentReference, collection, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../../../config/firebase";
-import { MenuItem, TableContainer, Table, TableHead, TableRow, TableCell, Typography, TableBody, Stack, Box, Chip } from "@mui/material";
+import { MenuItem, TableContainer, Table, TableHead, TableRow, TableCell, Typography, TableBody, Stack, Box, Chip, Button } from "@mui/material";
 import CustomSelect from "../../../src/components/forms/theme-elements/CustomSelect";
 import DashboardCard from "../../../src/components/shared/DashboardCard";
 import { Timestamp } from "firebase/firestore";
@@ -44,40 +44,55 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
   const [faculty, setFaculty] = useState<FacultyType[]>([]);
   const router = useRouter();
 
+  //view more details about the request such as comments
+  const viewMoreDetails = (requestID: string) => {
+    router.push({
+      pathname: "/dashboards/transfer-specialist/RequestDetails",
+      query: { requestID },
+    });
+  };
+  
+
   useEffect(() => {
 
     // Pull requests to be displayed from /Requests collection
     const fetchRequests = async () => {
       const requestsCollection = collection(db, "Requests");
-      const requestSnapshots = await getDocs(requestsCollection);
-      const fetchedRequests: RequestDisplayType[] = [];
-
-      for (const doc of requestSnapshots.docs) {
-        const requestData = doc.data() as RequestType;
-
-        // Convert the 'Date' object to a readable format
-        const timestamp = requestData.Date as unknown as Timestamp;
-        const date = timestamp.toDate().toLocaleDateString();
-
-        // Fetch the ExternalSyllabus document
-        const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
-        const syllabusData = syllabusSnapshot.data()?.CourseName;
-
-        // Fetch the Requester document
-        const requesterSnapshot = await getDoc(requestData.Requester);
-        const requesterData = requesterSnapshot.data()?.Name;
-
-        fetchedRequests.push({
-          id: doc.id,
-          Requester: requesterData,
-          ExternalSyllabus: syllabusData,
-          Status: requestData.Status,
-          Date: date,
+    
+      const unsubscribe = onSnapshot(requestsCollection, (querySnapshot) => {
+        const fetchedRequests: RequestDisplayType[] = [];
+    
+        querySnapshot.forEach(async (doc) => {
+          const requestData = doc.data() as RequestType;
+    
+          // Convert the 'Date' object to a readable format
+          const timestamp = requestData.Date as unknown as Timestamp;
+          const date = timestamp.toDate().toLocaleDateString();
+    
+          // Fetch the ExternalSyllabus document
+          const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
+          const syllabusData = syllabusSnapshot.data()?.CourseName;
+    
+          // Fetch the Requester document
+          const requesterSnapshot = await getDoc(requestData.Requester);
+          const requesterData = requesterSnapshot.data()?.Name;
+    
+          fetchedRequests.push({
+            id: doc.id,
+            Requester: requesterData,
+            ExternalSyllabus: syllabusData,
+            Status: requestData.Status,
+            Date: date,
+          });
+    
+          setRequests(fetchedRequests);
         });
-      }
-
-      setRequests(fetchedRequests);
+      });
+    
+      // Clean up the listener when the component unmounts
+      return unsubscribe;
     };
+    
 
     // Pull reviewers to be displayed from /Users collection
     const fetchFaculty = async () => {
@@ -145,11 +160,11 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
 };
 
 
-  function handleClick() {
-    return (
-        router.push('../../comparison/')
-    );
-  };
+  // function handleClick() {
+  //   return (
+  //       router.push('../../comparison/')
+  //   );
+  // };
   
   
 
@@ -199,7 +214,7 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
           <TableBody>
             {requests.map((request) => (
               <TableRow key={request.id}>
-                <TableCell onClick={handleClick}>
+                <TableCell>
                   <Typography variant="subtitle2" fontWeight={600}>
                     {request.Requester}
                   </Typography>
@@ -223,28 +238,28 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
                   </CustomSelect>
                 </TableCell>
                 <TableCell>
-                  <Chip
+                <Chip
                     sx={{
                       bgcolor:
                         request.Status === 'To-do'
                           ? (theme) => theme.palette.error.light
                           : request.Status === 'In progress'
-                            ? (theme) => theme.palette.warning.light
-                            : request.Status === 'Approved'
-                              ? (theme) => theme.palette.success.light
-                              : request.Status === 'Rejected'
-                                ? (theme) => theme.palette.info.light
-                                : (theme) => theme.palette.secondary.light,
+                          ? (theme) => theme.palette.warning.light
+                          : request.Status === 'Approved'
+                          ? (theme) => theme.palette.success.light
+                          : request.Status === 'Rejected'
+                          ? (theme) => theme.palette.error.light
+                          : (theme) => theme.palette.secondary.light,
                       color:
                         request.Status === 'To-do'
                           ? (theme) => theme.palette.error.main
                           : request.Status === 'In progress'
-                            ? (theme) => theme.palette.warning.main
-                            : request.Status === 'Approved'
-                              ? (theme) => theme.palette.success.main
-                              : request.Status === 'Rejected'
-                                ? (theme) => theme.palette.info.main
-                                : (theme) => theme.palette.secondary.main,
+                          ? (theme) => theme.palette.warning.main
+                          : request.Status === 'Approved'
+                          ? (theme) => theme.palette.success.main
+                          : request.Status === 'Rejected'
+                          ? (theme) => theme.palette.error.main
+                          : (theme) => theme.palette.secondary.main,
                       borderRadius: '8px',
                     }}
                     size="small"
@@ -255,6 +270,11 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
                   <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
                     {request.Date}
                   </Typography>
+                </TableCell>
+                <TableCell>
+                    <Button variant="outlined" onClick={() => viewMoreDetails(request.id)} >
+                      View Details
+                    </Button>
                 </TableCell>
               </TableRow>
             ))}
