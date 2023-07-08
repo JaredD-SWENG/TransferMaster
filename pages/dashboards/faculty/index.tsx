@@ -29,14 +29,15 @@ interface RequestDisplayType {
 
 const FacultyDashboard: CustomNextPage = () => {
   const [requests, setRequests] = useState<RequestDisplayType[]>([]);
-
+  const [userID, setUserID] = useState<string | undefined>();
     const router = useRouter();
     
-    const handleClick = (requestID: string, externalSyllabus: string) => {
-      console.log(externalSyllabus)
+    const handleClick = (requestID: string, externalSyllabus: string, userID: string | undefined) => {
+      console.log(externalSyllabus);
+      console.log("userID", userID);
       router.push({
         pathname: "../../comparison",
-        query: { requestID, externalSyllabus },
+        query: { requestID, externalSyllabus, userID },
         
       });
     };
@@ -57,6 +58,7 @@ const FacultyDashboard: CustomNextPage = () => {
                   if (!querySnapshot.empty) {
                       const userDoc = querySnapshot.docs[0];
                       userId = userDoc.id;
+                      setUserID(userId);
                       console.log(userId)
                   }
               }
@@ -197,7 +199,7 @@ const FacultyDashboard: CustomNextPage = () => {
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
-                                    <Button variant="outlined" onClick={() => handleClick(request.id, request.ExternalSyllabusPath)}>
+                                    <Button variant="outlined" onClick={() => handleClick(request.id, request.ExternalSyllabusPath, userID)}>
                                         Review
                                     </Button>
                                 </TableCell>

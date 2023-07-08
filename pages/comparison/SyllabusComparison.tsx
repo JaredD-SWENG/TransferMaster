@@ -114,6 +114,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
     const router = useRouter();
   
     const { requestID } = router.query;
+    const { userID } = router.query; 
 
     async function callLambdaFunction() {
         
@@ -257,7 +258,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                 <Grid item xs={12} lg={6}>
                 <ParentCard title="Penn State">
                 <Box>
-              <UploadPopup onExtractedData={handleExtractedData} requestID={requestID}/>
+              <UploadPopup onExtractedData={handleExtractedData} requestID={requestID} userID={userID}/>
               <SyllabusForm
                 course={psuCourseName}
                 credits={psuCredits}

@@ -14,7 +14,7 @@ import axios from 'axios';
 import { getDocument, GlobalWorkerOptions} from 'pdfjs-dist';
 import { ref, uploadBytes } from 'firebase/storage';
 import { db, storage } from '../../config/firebase';
-import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.7.107/pdf.worker.min.js';
 
 // Syllabus extracted sections - to be extracted by OS Parser
@@ -28,6 +28,7 @@ interface SyllabusProps {
 
 interface UploadPopupProps {
   requestID: string | string[] | undefined;
+  userID: string | string[] | undefined; 
   onExtractedData: (data: SyllabusProps) => void;
 }
 
@@ -41,7 +42,7 @@ const Transition = React.forwardRef(function Transition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID }) => {
+const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, userID }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [documentId, setDocumentId] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -192,13 +193,36 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID })
             const syllabiRef = await addDoc(collection(db, 'Syllabi'), syllabiDoc);
             console.log('Syllabus data stored successfully!');
 
+            console.log("UserID", userID);
+            //store the PSU syllabus under the User's myUploads
+            let userDocRef = doc(db, 'Users', userID as string);
+
+            // Get the user document from Firestore
+            const userDocSnapshot = await getDoc(userDocRef);
+
+            // Check if the MyUploads field exists in the user document
+            if (userDocSnapshot.exists() && userDocSnapshot.data().MyUploads) {
+              // If the MyUploads field already exists, add the syllabus document ID to the array
+              const myUploadsArray = userDocSnapshot.data().MyUploads;
+              myUploadsArray.push(syllabiRef.id);
+              console.log("Pushed syllabus ref to MyUploads[]")
+
+              // Update the user document with the updated MyUploads array
+              await updateDoc(userDocRef, { MyUploads: myUploadsArray });
+            } else {
+              // If the MyUploads field doesn't exist, create it with the syllabus document ID as the first element of the array
+              await setDoc(userDocRef, { MyUploads: [syllabiRef.id] }, { merge: true });
+              console.log("Created MyUploads[] and added the syllabus ref to it")
+            }
+
             //here
-            let requestDocRef = doc(db, 'Requests', requestID as string); // Replace 'YourCollectionName' with your actual collection name
+            let requestDocRef = doc(db, 'Requests', requestID as string); 
 
             await updateDoc(requestDocRef, {
                 PSUSyllabus: doc(db, 'Syllabi', syllabiRef.id) // Replace 'YourPSUSyllabusCollectionName' with your actual PSUSyllabus collection name
             });
             console.log('Request updated successfully!');
+
 
 
 
