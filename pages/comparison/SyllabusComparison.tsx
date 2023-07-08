@@ -165,12 +165,17 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
         // Update the state or perform any other actions with the extracted data
         // For example:
         setPsuCourseName(data.course);
-        setPsuCredits(data.credits);
+        if(Number.isNaN(data.credits) || data.credits === null){
+            setPsuCredits(0);
+        }else{
+            setPsuCredits(data.credits);
+        }
+        
        // console.log("PSUTEXT", data.fullText);
         setPsuFullText(data.fullText);
 
         //console.log("PSUTEXT", psuFullText);
-        if(data.textbook == null){
+        if(data.textbook == null || data.textbook == "" || data.textbook == " "){
             setPsuTextbook("Not provided")
         }else{
             setPsuTextbook(data.textbook)
