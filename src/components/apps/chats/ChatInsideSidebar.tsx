@@ -62,32 +62,7 @@ const ChatInsideSidebar = ({ isInSidebar, chat }: chatType) => {
           }}
           p={3}
         >
-          <Typography variant="h6" mb={2}>
-            Media ({totalMedia})
-          </Typography>
-          <Grid container spacing={2}>
-            {chat?.messages.map((c) => {
-              return (
-                <Grid item xs={12} lg={4} key={c.id}>
-                  {c?.type === "image" ? (
-                    <Avatar
-                      src={c?.msg}
-                      alt="media"
-                      variant="rounded"
-                      sx={{ width: "72px", height: "72px" }}
-                    />
-                  ) : (
-                    ""
-                  )}
-                </Grid>
-              );
-            })}
-            <Grid item xs={12} lg={12}>
-              {totalMedia === 0 ? (
-                <Alert severity="error">No Media Found!</Alert>
-              ) : null}
-            </Grid>
-          </Grid>
+        
 
           <Typography variant="h6" mt={5} mb={2}>
             Attachments ({totalAttachment})

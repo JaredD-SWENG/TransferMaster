@@ -12,13 +12,15 @@ import {
     DialogActions,
     DialogContentText,
     Grid,
-    Typography
+    Typography,
+    IconButton
 } from '@mui/material';
 import CustomFormLabel from '../../src/components/forms/theme-elements/CustomFormLabel';
 import { TransitionProps } from '@mui/material/transitions';
 import withRole from "../../src/components/hocs/withRole";
 import FullLayout from "../../src/layouts/full/FullLayout";
 import CustomNextPage from "../../types/custom";
+import { IconSend } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { getBytes, getDownloadURL, ref } from "firebase/storage";
 import { db, storage } from "../../config/firebase";
@@ -261,6 +263,7 @@ async function callLambdaFunction() {
         setOpen(false);
     };
 
+
     const handleChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
         setMessage(event.target.value);
       };
@@ -268,6 +271,15 @@ async function callLambdaFunction() {
     return (
         <PageContainer>
             <h1>Comparison Results</h1>
+        <Grid item xs={12} mt={3} display="flex" justifyContent="right" alignItems="center">
+                <Button variant="contained" component="span" onClick={handleClickMessage}>
+                <IconButton>
+          <IconSend stroke={1.5} color="white" size="20" />
+        </IconButton>
+                    Chat with syllabus
+                </Button>
+              
+            </Grid>
             {learningObjectivePercentages && 
     <Typography mt={6}>
         <DynamicBarChart syllabusComponents={syllabusComponents} />
