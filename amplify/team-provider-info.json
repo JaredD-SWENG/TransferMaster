@@ -1,0 +1,15 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-transfermaster-dev-194351-authRole",
+      "UnauthRoleArn": "arn:aws:iam::028335316611:role/amplify-transfermaster-dev-194351-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::028335316611:role/amplify-transfermaster-dev-194351-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-transfermaster-dev-194351-deployment",
+      "UnauthRoleName": "amplify-transfermaster-dev-194351-unauthRole",
+      "StackName": "amplify-transfermaster-dev-194351",
+      "StackId": "arn:aws:cloudformation:us-east-1:028335316611:stack/amplify-transfermaster-dev-194351/4b9a4150-1de9-11ee-a56e-12581941e26d",
+      "AmplifyAppId": "d3dd4zx81ijz05"
+    }
+  }
+}

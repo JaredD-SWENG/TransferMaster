@@ -144,14 +144,18 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
 	let locolors : string[] = []
 	let locategories : string[] = []
 
-	for(let i = 0; i < learningObjectives.scores.length; i++) {
-		locategories[i] = ('LO ' + (i+1 as number))
-		if(learningObjectives.scores[i] < 35)
-			locolors[i] = low
-		else if(learningObjectives.scores[i] > 35 && learningObjectives.scores[i] < 80)
-			locolors[i] = medium
-		else
-			locolors[i] = high
+	if (learningObjectives && learningObjectives.scores) {
+		for(let i = 0; i < learningObjectives.scores.length; i++) {
+			locategories[i] = ('LO ' + (i+1 as number))
+			if(learningObjectives.scores[i] < 35)
+				locolors[i] = low
+			else if(learningObjectives.scores[i] > 35 && learningObjectives.scores[i] < 80)
+				locolors[i] = medium
+			else
+				locolors[i] = high
+		}
+	} else {
+		// Handle the case when learningObjectives or learningObjectives.scores is undefined
 	}
 
 	locolumnchart.xaxis.categories = locategories
