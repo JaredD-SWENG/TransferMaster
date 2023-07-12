@@ -10,8 +10,7 @@ import {
     DialogContentText,
     Typography, 
     Card,
-    Grid,
-    Input} from "@mui/material";
+    Grid,} from "@mui/material";
 import ParentCard from "../../src/components/shared/ParentCard";
 import PageContainer from "../../src/components/container/PageContainer";
 import CustomFormLabel from "../../src/components/forms/theme-elements/CustomFormLabel";
@@ -20,13 +19,12 @@ import { useRouter } from "next/router";
 import CustomRangeSlider from "../../src/components/forms/theme-elements/CustomRangeSlider";
 import { getDoc, DocumentData, doc, DocumentReference } from "firebase/firestore";
 import { db, storage } from "../../config/firebase";
-import { TransitionProps } from '@mui/material/transitions';
-import Result from "./Result";
-import ChildCard from "../../src/components/shared/ChildCard";
 import UploadPopup from "./UploadPopup";
 import { ref, getBytes } from "firebase/storage";
 import { getDocument, GlobalWorkerOptions} from 'pdfjs-dist';
 import axios from "axios";
+import Result from "./Result";
+//import Result from "./ResultOld";
 GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.7.107/pdf.worker.min.js';
 
 //Syllabus extracted sections - to be extracted by OS Parser 
@@ -44,20 +42,16 @@ interface SyllabusDoc {
     CourseCategory: string;
     TermType: string;
     SyllabusURL: DocumentReference;
-  }
+}
 
-  interface SyllabusURLDoc {
+interface SyllabusURLDoc {
     fileUrl: string;
-  }
+}
 
-
-
-
-  {/**Syllabus Form */}
+{/**Syllabus Form */}
 const SyllabusForm: React.FC<SyllabusProps> = ({ course, credits, textbook, learningObjectives=[] }) => {
     return (
         <>
-            {/* <Typography variant='h4'>Course</Typography> */}
             <CustomFormLabel htmlFor="bl-name" sx={{ mt: 0 }}>
                 Course
             </CustomFormLabel>
@@ -116,8 +110,10 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
     const { requestID } = router.query;
     const { userID } = router.query; 
 
+    const [isLoading, setIsLoading] = useState(false);
+
     async function callLambdaFunction() {
-        
+        setIsLoading(true);
         console.log("Inside lambda: PSU: " + psuFullText);
         console.log("Inside lambda: EXT: " + extFullText);
         console.log("weights:" + sliderValues);
@@ -137,9 +133,11 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
             const percentages = data.percentages;
             const temp = percentages.map((s: string) => parseFloat(s)*100);
             setLearningObjectivePercentages(temp);
+            console.log(learningObjectivePercentages);
         } catch (error) {
             console.error(`Error calling lambda function: ${error}`);
         }
+        setIsLoading(false);
     }
 
     const handleCompare = () => {
@@ -153,7 +151,8 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
             //     pathname: 'comparison/Result',
             //     query: { sliderValues: JSON.stringify(sliderValues), requestID }
             //   }); 
-            
+            setShowCompare(false);
+            setShowResult(true);
         }
     };
 
@@ -165,9 +164,9 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
         // Update the state or perform any other actions with the extracted data
         // For example:
         setPsuCourseName(data.course);
-        if(Number.isNaN(data.credits) || data.credits === null){
+        if (Number.isNaN(data.credits) || data.credits === null) {
             setPsuCredits(0);
-        }else{
+        } else {
             setPsuCredits(data.credits);
         }
         
@@ -175,21 +174,13 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
         setPsuFullText(data.fullText);
 
         //console.log("PSUTEXT", psuFullText);
-        if(data.textbook == null || data.textbook == "" || data.textbook == " "){
+        if (data.textbook == null || data.textbook == "" || data.textbook == " ") {
             setPsuTextbook("Not provided")
-        }else{
+        } else {
             setPsuTextbook(data.textbook)
-
-        
         }
-
-        
-
-        
-       
-      };
+    };
       
-
     useEffect(() => {
         const fetchSyllabusData = async () => {
             //console.log("HELLO???????????????")
@@ -197,147 +188,191 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                     
             //get the id from the query 
             if (externalSyllabus) {
-              const syllabusDocRef = doc(db, externalSyllabus as string)
+                const syllabusDocRef = doc(db, externalSyllabus as string)
                       
-              const syllabusDoc = await getDoc(syllabusDocRef);
-              console.log(syllabusDoc)
-              if (syllabusDoc.exists()) {
-                const syllabusData = syllabusDoc.data() as DocumentData;
-                const { CourseName, Credits } = syllabusData;
-                setExtCourseName(CourseName);
-                setExtCredits(Credits);
-                const syllabusURLRef = syllabusData.SyllabusURL;
-                const syllabusURLDocSnapshot = await getDoc(syllabusURLRef);
+                const syllabusDoc = await getDoc(syllabusDocRef);
+                console.log(syllabusDoc)
+                if (syllabusDoc.exists()) {
+                    const syllabusData = syllabusDoc.data() as DocumentData;
+                    const { CourseName, Credits } = syllabusData;
+                    setExtCourseName(CourseName);
+                    setExtCredits(Credits);
+                    const syllabusURLRef = syllabusData.SyllabusURL;
+                    const syllabusURLDocSnapshot = await getDoc(syllabusURLRef);
 
+                    if (syllabusURLDocSnapshot.exists()) {
+                        let syllabusURLDocData = syllabusURLDocSnapshot.data() as SyllabusURLDoc;
+                        let storageFileURL = syllabusURLDocData.fileUrl;
 
-                if (syllabusURLDocSnapshot.exists()) {
-                    let syllabusURLDocData = syllabusURLDocSnapshot.data() as SyllabusURLDoc;
-                    let storageFileURL = syllabusURLDocData.fileUrl;
+                        const fileRef = ref(storage, storageFileURL);
+                        const fileBytes = await getBytes(fileRef);
 
-                    const fileRef = ref(storage, storageFileURL);
-                    const fileBytes = await getBytes(fileRef);
+                        const loadingTask = getDocument({ data: fileBytes });
+                        const pdf = await loadingTask.promise;
 
-                    const loadingTask = getDocument({ data: fileBytes });
-                    const pdf = await loadingTask.promise;
+                        loadingTask.promise
+                        .then(async (pdf: { numPages: number; getPage: (arg0: number) => any }) => {
+                            //console.log('Promise resolved. PDF:', pdf);
 
-                    loadingTask.promise
-                    .then(async (pdf: { numPages: number; getPage: (arg0: number) => any }) => {
-                        //console.log('Promise resolved. PDF:', pdf);
+                            let extFullText = '';
+                            // Loop through each page and extract text
+                            for (let i = 1; i <= pdf.numPages; i++) {
+                                const page = await pdf.getPage(i);
 
-                        let extFullText = '';
-                        // Loop through each page and extract text
-                        for (let i = 1; i <= pdf.numPages; i++) {
-                        const page = await pdf.getPage(i);
+                                // Extract the text content
+                                const content = await page.getTextContent();
 
-                        // Extract the text content
-                        const content = await page.getTextContent();
-
-                        // Combine the text items into a single string
-                        const text = content.items.map((item: { str: any }) => item.str).join(' ');
+                                // Combine the text items into a single string
+                                const text = content.items.map((item: { str: any }) => item.str).join(' ');
                         
-                        extFullText += text + '\n';
-                        //console.log(psuFullText);
+                                extFullText += text + '\n';
+                                //console.log(psuFullText);
 
-                        }
-                        setExtFullText(extFullText);
-                        //console.log("EXTERNAL", extFullText)
-
-                    
-                    })
+                            }
+                            setExtFullText(extFullText);
+                            //console.log("EXTERNAL", extFullText)
+                        })
+                    }
                 }
-                
-              }
             }
-          };
-          
-          fetchSyllabusData();
-          }, [router.query]);
-          
+        }; 
+        fetchSyllabusData();
+    }, [router.query]);
+       
+    const [showCompare, setShowCompare] = useState(true);
+    const [showResult, setShowResult] = useState(false);
 
-          
- 
+    const syllabusComponents : any = {
+        score: 73.68,
+        learningObjectives: {
+            objectives: [
+                'Want to sell your soul',
+                'Learn calculus 2',
+                'Cry many tears',
+                'Fill out pieces of paper worth a small forest with problem questions or use up all your storage space'
+            ],
+            scores: learningObjectivePercentages,
+            score: 30,
+            summary: [
+                'Soul was mentioned but it was probably "soul enriching" so nope',
+                'There was learning and calculus so ::thumbs up::',
+                'Crying was involved',
+                'This essentially points to lots of practice work and there definitely is a lot of that although no wastage is expected'
+            ]
+        },
+        textbook: {
+            title: 'Calculus 2',
+            author: 'Manasi Patil',
+            score: 100,
+            summary: 'This book is the exact same as the other one since no one can resist books written by Manasi Patil.'
+        },
+        gradingScheme: {
+            gradingScheme: {
+                'A': 93,
+                'A-': 90,
+                'B+': 88,
+                'B': 85,
+                'B-': 82,
+                'C+': 75,
+                'C': 70,
+                'D': 68,
+                'D-': 63,
+                'F': 60
+            },
+            score: 80,
+            summary: 'Standard grading scheme no comment'
+        }
+    };
+
     return (
         <PageContainer>
             <h1>Syllabus Comparison</h1>
             <Grid container spacing={3} mt={3}>
                 <Grid item xs={12} lg={6}>
-                <ParentCard title="Penn State">
-                <Box>
-              <UploadPopup onExtractedData={handleExtractedData} requestID={requestID} userID={userID}/>
-              <SyllabusForm
-                course={psuCourseName}
-                credits={psuCredits}
-                textbook={psuTextbook}
-                learningObjectives={learningObjectives}
-              />
-            </Box>
-                </ParentCard>
-
+                    <ParentCard title="Penn State">
+                        <Box>
+                            <UploadPopup onExtractedData={handleExtractedData} requestID={requestID} userID={userID}/>
+                            <SyllabusForm
+                                course={psuCourseName}
+                                credits={psuCredits}
+                                textbook={psuTextbook}
+                                learningObjectives={learningObjectives}
+                            />
+                        </Box>
+                    </ParentCard>
                 </Grid>
                 <Grid item xs={12} lg={6}>
-                <ParentCard title="External School">
-                    <SyllabusForm course={extCourseName} credits={extCredits} textbook={textbook} learningObjectives={learningObjectives} />
-                </ParentCard>
-            </Grid>
-            <Grid item xs={12} lg={16}>
-                <Box display={'flex'} flexDirection={'row'} alignItems={'center'} gap={5}>
-                    <Box display={'flex'} justifyContent={'flex-start'} alignItems={'center'} flex={1}>
-                    <Typography>{sliderValues[0]}</Typography>
-                        <CustomRangeSlider min={0} max={100} step={5} value={sliderValues[0]} onChange={handleSliderChange(0)} />
-                    </Box>
+                    <ParentCard title="External School">
+                        <SyllabusForm course={extCourseName} credits={extCredits} textbook={textbook} learningObjectives={learningObjectives} />
+                    </ParentCard>
+                </Grid>
+                <Grid item xs={12} lg={16}>
+                    <Box display={'flex'} flexDirection={'row'} alignItems={'center'} gap={5}>
+                        <Box display={'flex'} justifyContent={'flex-start'} alignItems={'center'} flex={1}>
+                            <Typography>{sliderValues[0]}</Typography>
+                            <CustomRangeSlider min={0} max={100} step={5} value={sliderValues[0]} onChange={handleSliderChange(0)} />
+                        </Box>
                     <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
-                    <Typography>{sliderValues[1]}</Typography>
+                        <Typography>{sliderValues[1]}</Typography>
                         <CustomRangeSlider min={0} max={100} step={5} value={sliderValues[1]} onChange={handleSliderChange(1)} />
                     </Box>
                     <Box display={'flex'} justifyContent={'flex-end'} alignItems={'center'} flex={1}>
-                    <Typography>{sliderValues[2]}</Typography>
-                        <CustomRangeSlider min={0} max={100} step={5} value={sliderValues[2]} onChange={handleSliderChange(2)} />
+                        <Typography>{sliderValues[2]}</Typography>
+                            <CustomRangeSlider min={0} max={100} step={5} value={sliderValues[2]} onChange={handleSliderChange(2)} />
+                        </Box>
                     </Box>
-                </Box>
-            </Grid>
-            <Grid item xs={12} lg={16}>
-                <Box display={'flex'} flexDirection={'row'} alignItems={'center'} gap={5}>
-                    <Box display={'flex'} justifyContent={'left'} alignItems={'left'} flex={1}>
-                        <Typography>
-                            Learning outcomes
-                        </Typography>
+                </Grid>
+                <Grid item xs={12} lg={16}>
+                    <Box display={'flex'} flexDirection={'row'} alignItems={'center'} gap={5}>
+                        <Box display={'flex'} justifyContent={'left'} alignItems={'left'} flex={1}>
+                            <Typography>
+                                Learning outcomes
+                            </Typography>
+                        </Box>
+                        <Box display={'flex'} justifyContent={'left'} alignItems={'left'} flex={1}>
+                            <Typography>
+                                Textbook
+                            </Typography>
+                        </Box>
+                        <Box display={'flex'} justifyContent={'left'} alignItems={'left'} flex={1}>
+                            <Typography>
+                                Grading scheme
+                            </Typography>
+                        </Box>
                     </Box>
-                    <Box display={'flex'} justifyContent={'left'} alignItems={'left'} flex={1}>
-                        <Typography>
-                            Textbook
-                        </Typography>
-                    </Box>
-                    <Box display={'flex'} justifyContent={'left'} alignItems={'left'} flex={1}>
-                        <Typography>
-                            Grading scheme
-                        </Typography>
-                    </Box>
-                </Box>
+                </Grid>
+                <Grid item xs={12} mt={3} display="flex" justifyContent="center" alignItems="center">
+                    {showCompare && (
+                        <Button variant="contained" component="span" onClick={handleCompare}>
+                            Compare
+                        </Button>
+                    )}
+                    {isLoading && <Card>Loading...</Card>}
+                </Grid>
+                <Grid item xs={12} display="flex" justifyContent="center" alignItems="center">
+                    {displayText && <Card>{displayText}</Card>}
+                </Grid>
+                <Dialog open={open} onClose={handleClose}>
+                    <DialogTitle>{"Error"}</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            The sum of all slider values must be exactly 1.
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleClose} color="primary">
+                            OK
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </Grid>
-            <Grid item xs={12} mt={3} display="flex" justifyContent="center" alignItems="center">
-                <Button variant="contained" component="span" onClick={handleCompare}>
-                    Compare
-                </Button>
-              
-            </Grid>
-            <Grid item xs={12} display="flex" justifyContent="center" alignItems="center">
-                {displayText && <Card>{displayText}</Card>}
-            </Grid>
-            <Dialog open={open} onClose={handleClose}>
-                <DialogTitle>{"Error"}</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        The sum of all slider values must be exactly 1.
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleClose} color="primary">
-                        OK
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Grid>
-      </PageContainer>
+            {!isLoading && showResult && (
+                <Result 
+                    learningObjectivePercentages={learningObjectivePercentages}
+                    syllabusComponents={syllabusComponents}
+                />
+            )}
+        </PageContainer>
     );
 };
 
