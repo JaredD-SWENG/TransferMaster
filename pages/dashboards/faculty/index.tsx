@@ -23,6 +23,7 @@ interface RequestDisplayType {
   id: string;
   Requester: string;
   ExternalSyllabus: string; //name of syllabus should be displayed as a string
+  CourseCategory: string;
   ExternalSyllabusPath: string;
   Status: string;
   Date: string;
@@ -81,7 +82,8 @@ const FacultyDashboard: CustomNextPage = () => {
                   const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
                   console.log(requestData.ExternalSyllabus.path);
                   const externalSyllabusPath = requestData.ExternalSyllabus.path;
-                  const syllabusData = syllabusSnapshot.data()?.CourseName;
+                  const syllabusName = syllabusSnapshot.data()?.CourseName;
+                  const syllabusCategory = syllabusSnapshot.data()?.CourseCategory;
   
 
 
@@ -92,7 +94,8 @@ const FacultyDashboard: CustomNextPage = () => {
                   fetchedRequests.push({
                       id: doc.id,
                       Requester: requesterData,
-                      ExternalSyllabus: syllabusData,
+                      ExternalSyllabus: syllabusName,
+                      CourseCategory: syllabusCategory,
                       ExternalSyllabusPath: externalSyllabusPath,
                       Status: requestData.Status,
                       Date: date,
@@ -106,11 +109,7 @@ const FacultyDashboard: CustomNextPage = () => {
       }, []); // <-- Empty dependency array
     return (
       
-        <>
-        <Grid item xs={12} mt={3} mb={3}>
-            <Button variant="contained" color="primary" onClick={handleUploadHistoryClick}>My Uploads</Button>
-        </Grid>
-       
+        <>       
         <Grid >
             <FilterUIFaculty/>    
           </Grid>
@@ -148,7 +147,7 @@ const FacultyDashboard: CustomNextPage = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {requests.map((request: { id: any; Requester: any; ExternalSyllabus: any; Status: string; Date: any; ExternalSyllabusPath: string; }) => (
+                        {requests.map((request: { id: any; Requester: any; ExternalSyllabus: any; CourseCategory: string; Status: string; Date: any; ExternalSyllabusPath: string; }) => (
                             <TableRow key={request.id}>
                                 <TableCell>
                                     <Stack direction="row" spacing={2}>
@@ -167,7 +166,7 @@ const FacultyDashboard: CustomNextPage = () => {
                                
                                 <TableCell>
                                     <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
-                                        Course Category
+                                    {request.CourseCategory}
                                     </Typography>
                                 </TableCell>
 
