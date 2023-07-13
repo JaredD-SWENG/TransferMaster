@@ -22,14 +22,14 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusCo
     const [message, setMessage] = useState('');
     
     const DynamicBarChart = dynamic(() => import('./BarChart'), { ssr: false });
-    const Transition = React.forwardRef(function Transition(
-        props: TransitionProps & {
-          children: React.ReactElement<any, any>;
-        },
-        ref: React.Ref<unknown>,
-    ) {
-        return <Slide direction="up" ref={ref} {...props} />;
-    });
+    // const Transition = React.forwardRef(function Transition(
+    //     props: TransitionProps & {
+    //       children: React.ReactElement<any, any>;
+    //     },
+    //     ref: React.Ref<unknown>,
+    // ) {
+    //     return <Slide direction="up" ref={ref} {...props} />;
+    // });
     const requestID = router.query.requestID as string;
 
     const handleApproveClickOpen = () => {
@@ -91,7 +91,7 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusCo
                 </Grid>
                 <Dialog
                     open={open}
-                    TransitionComponent={Transition}
+                    // TransitionComponent={Transition}
                     keepMounted
                     onClose={handleClose}
                     fullWidth
