@@ -19,7 +19,7 @@ const AppDD = () => {
   return (
     <>
       <Box>
-        <Button
+        {/* <Button
           aria-label="show 11 new notifications"
           color="inherit"
           variant="text"
@@ -33,7 +33,7 @@ const AppDD = () => {
           endIcon={<IconChevronDown size="15" style={{ marginLeft: '-5px', marginTop: '2px' }} />}
         >
           Apps
-        </Button>
+        </Button> */}
         {/* ------------------------------------------- */}
         {/* Message Dropdown */}
         {/* ------------------------------------------- */}
@@ -55,7 +55,7 @@ const AppDD = () => {
           }}
         >
           <Grid container>
-            <Grid item sm={8} display="flex">
+            {/* <Grid item sm={8} display="flex">
               <Box p={4} pr={0} pb={3}>
                 <AppLinks />
                 <Divider />
@@ -90,7 +90,7 @@ const AppDD = () => {
                 </Box>
               </Box>
               <Divider orientation="vertical" />
-            </Grid>
+            </Grid> */}
             <Grid item sm={4}>
               <Box p={4}>
                 <QuickLinks />
@@ -99,15 +99,9 @@ const AppDD = () => {
           </Grid>
         </Menu>
       </Box>
-      <Button color="inherit" sx={{color: (theme) => theme.palette.text.secondary}} variant="text" href="/apps/chat" component={Link}>
-        Chat
-      </Button>
-      <Button color="inherit" sx={{color: (theme) => theme.palette.text.secondary}} variant="text" href="/apps/calendar" component={Link}>
-        Calendar
-      </Button>
-      <Button color="inherit" sx={{color: (theme) => theme.palette.text.secondary}} variant="text" href="/apps/email" component={Link}>
+      {/* <Button color="inherit" sx={{color: (theme) => theme.palette.text.secondary}} variant="text" href="/apps/email" component={Link}>
         Email
-      </Button>
+      </Button> */}
     </>
   );
 };

@@ -75,16 +75,16 @@ const Menuitems: MenuitemsType[] = [
     id: uniqueId(),
     title: 'Dashboard',
     icon: IconAperture,
-    href: '/',
+    href: '/dashboards/navigator',
     chip: 'New',
     chipColor: 'secondary',
   },
-  // {
-  //   id: uniqueId(),
-  //   title: 'eCommerce',
-  //   icon: IconShoppingCart,
-  //   href: '/dashboards/ecommerce',
-  // },
+  {
+    id: uniqueId(),
+    title: 'My Uploads',
+    icon: IconNotes,
+    href: '/my-uploads/',
+  },
   // {
   //   navlabel: true,
   //   subheader: 'Apps',

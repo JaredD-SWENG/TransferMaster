@@ -16,7 +16,7 @@ const Logo = () => {
 
   if (customizer.activeDir === "ltr") {
     return (
-      <LinkStyled href="/">
+      <LinkStyled href="/dashboards/navigator">
         {customizer.activeMode === "dark" ? (
           <Image
             src="/images/logos/logo.svg"
