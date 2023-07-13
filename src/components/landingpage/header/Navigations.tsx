@@ -39,7 +39,7 @@ const Navigations = () => {
 
     return (
         <>
-            <StyledButton
+            {/* <StyledButton
                 color="inherit"
                 variant="text"
                 aria-expanded={open ? 'true' : undefined}
@@ -107,12 +107,9 @@ const Navigations = () => {
                         </Grid>
                     </Paper>
                 )}
-            </Box>
+            </Box> */}
             <StyledButton color="inherit" variant="text" href="https://drive.google.com/file/d/1wQ0tT1TbGr4QcA5uKHIwaVUJpD5VKL5n/view?usp=sharing">
                 Documentation
-            </StyledButton>
-            <StyledButton color="inherit" variant="text" href="https://adminmart.com/support">
-                Support
             </StyledButton>
             <Button color="primary" variant="contained" href="/auth/auth1/login">
                 Login

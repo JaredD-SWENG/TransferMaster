@@ -272,7 +272,7 @@ async function callLambdaFunction() {
         <PageContainer>
             <h1>Comparison Results</h1>
         <Grid item xs={12} mt={3} display="flex" justifyContent="right" alignItems="center">
-                <Button variant="contained" component="span" onClick={handleClickMessage}>
+                <Button variant="contained" component="span">
                 <IconButton>
           <IconSend stroke={1.5} color="white" size="20" />
         </IconButton>
