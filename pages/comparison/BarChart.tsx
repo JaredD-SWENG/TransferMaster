@@ -204,7 +204,7 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
                 				Textbook Information
               				</Typography>
               				<Typography variant='h5' mt={3}>
-                				Textbook: {textbook.title} by {textbook.author}
+                				Textbook: {textbook.psuTextbook} and {textbook.extTextbook}
               				</Typography>
               				<Typography variant='h6' mt={3}>
                 				Summary:

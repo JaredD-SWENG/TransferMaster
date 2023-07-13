@@ -8,6 +8,7 @@ import { DocumentReference, Timestamp, collection, doc, getDoc, getDocs, query, 
 import CustomNextPage from "../../../types/custom";
 import FullLayout from "../../../src/layouts/full/FullLayout";
 import withRole from "../../../src/components/hocs/withRole";
+import FilterUIFaculty from "../../filterUI/FilterUIfaculty";
 //Requests collection
 interface RequestType {
   id: string;
@@ -82,6 +83,8 @@ const FacultyDashboard: CustomNextPage = () => {
                   const externalSyllabusPath = requestData.ExternalSyllabus.path;
                   const syllabusData = syllabusSnapshot.data()?.CourseName;
   
+
+
                   // Fetch the Requester document
                   const requesterSnapshot = await getDoc(requestData.Requester);
                   const requesterData = requesterSnapshot.data()?.Name;
@@ -107,19 +110,12 @@ const FacultyDashboard: CustomNextPage = () => {
         <Grid item xs={12} mt={3} mb={3}>
             <Button variant="contained" color="primary" onClick={handleUploadHistoryClick}>My Uploads</Button>
         </Grid>
+       
+        <Grid >
+            <FilterUIFaculty/>    
+          </Grid>
         <DashboardCard
-            title="Requests"
-            action={
-                <CustomSelect
-                    labelId="month-dd"
-                    id="month-dd"
-                    size="small"
-                >
-                    <MenuItem value={1}>March 2023</MenuItem>
-                    <MenuItem value={2}>April 2023</MenuItem>
-                    <MenuItem value={3}>May 2023</MenuItem>
-                </CustomSelect>
-            }
+            title="Requests"       
         >
             <TableContainer>
                 <Table
@@ -136,6 +132,10 @@ const FacultyDashboard: CustomNextPage = () => {
                             <TableCell>
                                 <Typography variant="subtitle2" fontWeight={600}>Syllabus</Typography>
                             </TableCell>
+                            <TableCell>
+                                <Typography variant="subtitle2" fontWeight={600}>Course Category</Typography>
+                            </TableCell>
+                            
                             <TableCell>
                                 <Typography variant="subtitle2" fontWeight={600}>Status</Typography>
                             </TableCell>
@@ -164,6 +164,13 @@ const FacultyDashboard: CustomNextPage = () => {
                                         {request.ExternalSyllabus}
                                     </Typography>
                                 </TableCell>
+                               
+                                <TableCell>
+                                    <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
+                                        Course Category
+                                    </Typography>
+                                </TableCell>
+
                                 <TableCell>
                                     <Chip
                                         sx={{

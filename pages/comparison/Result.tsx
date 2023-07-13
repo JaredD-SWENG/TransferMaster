@@ -1,4 +1,4 @@
-import { Typography, Grid, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Box, TextField, Slide } from "@mui/material";
+import { Typography, Grid, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Box, TextField, Slide, IconButton } from "@mui/material";
 import PageContainer from "../../src/components/container/PageContainer";
 import CustomFormLabel from "../../src/components/forms/theme-elements/CustomFormLabel";
 import withRole from "../../src/components/hocs/withRole";
@@ -10,13 +10,13 @@ import { TransitionProps } from "@mui/material/transitions";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import router from "next/router";
+import { IconSend } from "@tabler/icons-react";
 
 interface ResultProps {
-    learningObjectivePercentages: number[];
     syllabusComponents: any;
 }
 
-const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({learningObjectivePercentages, syllabusComponents}) => {
+const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusComponents}) => {
     const [status, setStatus] = useState('');
     const [open, setOpen] = useState(false);
     const [message, setMessage] = useState('');
@@ -54,10 +54,21 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({learningOb
     const handleChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
         setMessage(event.target.value);
     };
+    const handleClickMessage = () => {
+        console.log('inside handleClickMessage')
+    };
 
     return (
         <PageContainer>
             <h1>Comparison Results</h1>
+            <Grid item xs={12} mt={3} display="flex" justifyContent="right" alignItems="center">
+                <Button variant="contained" component="span" onClick={handleClickMessage}>
+                    <IconButton>
+                        <IconSend stroke={1.5} color="white" size="20" />
+                    </IconButton>
+                    Chat with syllabus
+                </Button>
+            </Grid>
             {/*</PageContainer>{learningObjectivePercentages && (*/}
                 <Typography mt={6}>
                     <DynamicBarChart syllabusComponents={syllabusComponents} />
