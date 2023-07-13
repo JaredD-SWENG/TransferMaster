@@ -138,36 +138,46 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
 		},
   	];
 
-  	const { learningObjectives, textbook, gradingScheme } = syllabusComponents
+	const { learningObjectives, textbook, gradingScheme } = syllabusComponents ?? {};
 
 	// iterate through the learning objectives scores and determine the right color for each score
-	let locolors : string[] = []
-	let locategories : string[] = []
+	let locolors: string[] = [];
+let locategories: string[] = [];
 
-	if (learningObjectives && learningObjectives.scores) {
-		for(let i = 0; i < learningObjectives.scores.length; i++) {
-			locategories[i] = ('LO ' + (i+1 as number))
-			if(learningObjectives.scores[i] < 35)
-				locolors[i] = low
-			else if(learningObjectives.scores[i] > 35 && learningObjectives.scores[i] < 80)
-				locolors[i] = medium
-			else
-				locolors[i] = high
-		}
-	} else {
-		// Handle the case when learningObjectives or learningObjectives.scores is undefined
-	}
+if (learningObjectives && learningObjectives.scores !== undefined) {
+  for (let i = 0; i < learningObjectives.scores.length; i++) {
+    locategories[i] = 'LO ' + (i + 1);
+    if (learningObjectives.scores[i] < 35) locolors[i] = low;
+    else if (learningObjectives.scores[i] > 35 && learningObjectives.scores[i] < 80) locolors[i] = medium;
+    else locolors[i] = high;
+  }
+} else {
+  locolors = [];
+  locategories = [];
+}
 
 	locolumnchart.xaxis.categories = locategories
 	locolumnchart.colors = locolors
-	loseries[0].data = learningObjectives.scores
+	if (learningObjectives && learningObjectives.scores) {
+		loseries[0].data = learningObjectives.scores;
+	  } else {
+		loseries[0].data = []; // or handle the case when scores is undefined
+	  }
+	  
 
-	let maindata : number[] = []
-	let maincolors : string[] = []
-
-	maindata[0] = learningObjectives.score
-	maindata[1] = textbook.score
-	maindata[2] = gradingScheme.score
+	  let maincolors: string[] = [];
+	  let maindata: number[] = [];
+// ...
+if (learningObjectives !== undefined && learningObjectives.score !== undefined && textbook !== undefined && textbook.score !== undefined && gradingScheme !== undefined && gradingScheme.score !== undefined) {
+  maindata[0] = learningObjectives.score;
+  maindata[1] = textbook.score;
+	maindata[2] = gradingScheme.score;
+} else {
+  // Handle the case when the score is undefined or learningObjectives is not defined
+  maindata[0] = 0; // Assign a default value or handle the error case appropriately
+  maindata[1] = 0;
+	maindata[2] = 0;
+}
 
 	for(let i = 0; i < 3; i++) {
 		if(maindata[i] <= 35)
@@ -181,13 +191,13 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
 	maincolumnchart.colors = maincolors
 	mainseries[0].data = maindata
 
-  	const gradingArray = Object.entries(gradingScheme.gradingScheme);
+	const gradingArray = Object.entries(gradingScheme?.gradingScheme || {});
 
   	return (
     	<Box>
       		<>
         		<Typography variant='h1'>
-          			Score: {syllabusComponents.score}
+          			Score: {syllabusComponents?.score || 'N/A'}
         		</Typography>
         		<Chart options={maincolumnchart} series={mainseries} type="bar" height="295px" width={"100%"}/>
         		{ 
@@ -232,7 +242,7 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
                 				Summary:
               				</Typography>
               				<Typography variant='body1'>
-                				{gradingScheme.summary}
+                				{gradingScheme?.summary}
               				</Typography>
             			</Box>
           			) : null

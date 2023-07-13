@@ -84,7 +84,9 @@ const SubmitRequest: CustomNextPage = () => {
         </CustomFormLabel>
       </Grid>
       <Grid item xs={12}>
-        <ComboBoxAutocomplete />
+        <ComboBoxAutocomplete value={''} setValue={function (value: string): void {
+          throw new Error('Function not implemented.');
+        } } options={[]} placeholder={''} />
       </Grid>
       {/* 8 */}
       <Grid item xs={12} display="flex" alignItems="center">

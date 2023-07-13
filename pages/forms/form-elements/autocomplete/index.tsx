@@ -33,7 +33,9 @@ const MuiAutoComplete = () => (
       <Grid container spacing={3}>
         <Grid item xs={12} lg={4} sm={6} display="flex" alignItems="stretch">
           <ChildCard title="Combo Box">
-            <ComboBoxAutocomplete />
+            <ComboBoxAutocomplete value={''} setValue={function (value: string): void {
+              throw new Error('Function not implemented.');
+            } } options={[]} placeholder={''} />
           </ChildCard>
         </Grid>
         <Grid item xs={12} lg={4} sm={6} display="flex" alignItems="stretch">
