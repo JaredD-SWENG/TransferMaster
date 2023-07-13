@@ -91,32 +91,35 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, u
         console.log('OS API RESPONSE:', apiResponse);
 
         // Get the extracted data from the response
-        const { extracted_sections, institution } = apiResponse.data;
-        const courseNameHolder = extracted_sections.code;
-        const creditsHolder = extracted_sections.credits;
-        const institutionName = institution ? institution.name : '';
-        const textbook = extracted_sections.textbook;
-        // Initialize the relevant variables
-        let courseNameValue = '';
-        let institutionValue = '';
-        let creditsValue = '';
-        let textbookValue = '';
+       // Get the extracted data from the response
+       const { extracted_sections, institution } = apiResponse.data;
+       const courseNameHolder = extracted_sections.code;
+       const creditsHolder = extracted_sections.credits;
+       const institutionName = institution ? institution.name : '';
+       const textbook = extracted_sections.required_reading;
+       // Initialize the relevant variables
+       let courseNameValue = '';
+       let institutionValue = '';
+       let creditsValue = '';
+       let textbookValue = '';
 
-        if (courseNameHolder && courseNameHolder.length > 0) {
-          courseNameValue = courseNameHolder[0].text;
-        }
+       if (courseNameHolder && courseNameHolder.length > 0) {
+         courseNameValue = courseNameHolder[0].text;
+       }
 
-        if (institutionName) {
-          institutionValue = institutionName;
-        }
+       if (institutionName) {
+         institutionValue = institutionName;
+       }
 
-        if (creditsHolder && creditsHolder.length > 0) {
-          creditsValue = creditsHolder[0].text;
-        }
+       if (creditsHolder && creditsHolder.length > 0) {
+         creditsValue = creditsHolder[0].text;
+       }
 
-        if (textbook) {
-          textbookValue = textbook;
-        }
+       if (textbook && textbook.length > 0) {
+         textbookValue = textbook[0].text;
+       }
+
+       console.log("textbook:" , textbookValue)
 
         console.log("textbook:" , textbookValue)
 
