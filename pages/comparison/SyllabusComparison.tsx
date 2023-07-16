@@ -246,9 +246,10 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                 console.log(syllabusDoc)
                 if (syllabusDoc.exists()) {
                     const syllabusData = syllabusDoc.data() as DocumentData;
-                    const { CourseName, Credits } = syllabusData;
+                    const { CourseName, Credits, Textbook } = syllabusData;
                     setExtCourseName(CourseName);
                     setExtCredits(Credits);
+                    setExtTextbook(Textbook);
                     const syllabusURLRef = syllabusData.SyllabusURL;
                     const syllabusURLDocSnapshot = await getDoc(syllabusURLRef);
 
@@ -362,7 +363,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                         <SyllabusForm
                             course={extCourseName}
                             credits={extCredits}
-                            textbook={textbook}
+                            textbook={extTextbook}
                             learningObjectives={learningObjectives}
                         />
                     </ParentCard>
