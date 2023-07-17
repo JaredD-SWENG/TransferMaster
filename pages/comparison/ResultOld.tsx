@@ -337,4 +337,4 @@ Result.getLayout = function getLayout(page: ReactElement) {
     return <FullLayout>{page}</FullLayout>;
 };
 
-export default withRole({ Component: Result, roles: ['Reviewer', 'Transfer Specialist'] });
+export default withRole({ Component: Result, roles: ['Faculty', 'Transfer Specialist'] });
