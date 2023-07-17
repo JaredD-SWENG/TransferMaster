@@ -17,7 +17,7 @@ import Scrollbar from '../custom-scroll/Scrollbar';
 import { IconBellRinging } from '@tabler/icons-react';
 import { Stack } from '@mui/system';
 import Link from 'next/link';
-import FilterUI from '../../../pages/filterUI/FilterUIfaculty';
+import FilterUI from '../../../pages/filterUI/FacultyFilter';
 import ControlledDatepicker from './ControlledDatePicker';
 import Coursecategory from './CourseCategory';
 import Reviewstatus from './ReviewStatus';

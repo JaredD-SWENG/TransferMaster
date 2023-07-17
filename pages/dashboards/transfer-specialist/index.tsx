@@ -10,7 +10,7 @@ import CustomNextPage from "../../../types/custom";
 import FullLayout from "../../../src/layouts/full/FullLayout";
 import withRole from "../../../src/components/hocs/withRole";
 import { useRouter } from "next/router";
-import FilterUITCS from "../../filterUI/FilterUITCS";
+import FilterUITCS from "../../filterUI/TSCFilter";
 
 // db collection schemas
 

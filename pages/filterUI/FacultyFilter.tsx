@@ -8,7 +8,7 @@ import ControlledDatePicker from '../../src/components/filterUI/ControlledDatePi
 const option1 = ['Option 1', 'Option 2', 'Option 3'];
 
 interface FacultyFilterProps {
-    onSelect: (value: string | null) => void;
+    onSelect: (value: string[] | null) => void;
 }
 
 const FacultyFilter: React.FC<FacultyFilterProps> = ({ onSelect }) => {
