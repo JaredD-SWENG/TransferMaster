@@ -44,6 +44,7 @@ const StudentUploadPage: CustomNextPage = () => {
   const [courseCategoryValue, setCourseCategoryValue] = useState<string>('');
   const [termTypeValue, setTermTypeValue] = useState<string>('');
   const [gradeValue, setGradeValue] = useState<string>('');
+  const [textbookValue, setTextBookValue] = useState<string>('');
   const [isFormComplete, setIsFormComplete] = useState(false);
   const router = useRouter();
 
@@ -76,11 +77,13 @@ const StudentUploadPage: CustomNextPage = () => {
         const courseNameHolder = extracted_sections.code;
         const creditsHolder = extracted_sections.credits;
         const institutionName = institution ? institution.name : '';
+        const textbook = extracted_sections.required_reading;
   
         // Initialize the relevant variables
         let courseNameValue = '';
         let institutionValue = '';
         let creditsValue = '';
+        let textbookValue = '';
   
         if (courseNameHolder && courseNameHolder.length > 0) {
           courseNameValue = courseNameHolder[0].text;
@@ -93,6 +96,10 @@ const StudentUploadPage: CustomNextPage = () => {
         if (creditsHolder && creditsHolder.length > 0) {
           creditsValue = creditsHolder[0].text;
         }
+
+        if(textbook && textbook.length > 0){
+          textbookValue = textbook[0].text;
+        }
   
         // Update the institutionValue state to display in the CustomFormLabel
         setInstitutionValue(institutionValue);
@@ -100,6 +107,7 @@ const StudentUploadPage: CustomNextPage = () => {
         // Update the code, institution, and credits values in the respective states
         setCodeValue(courseNameValue);
         setCreditsValue(creditsValue);
+        setTextBookValue(textbookValue);
 
          // Load the PDF document from the bytes
       const loadingTask = getDocument({ data: fileBytes });
@@ -186,7 +194,9 @@ const handleSubmit = async () => {
         Credits: Number(creditsValue),
         CourseCategory: courseCategoryValue,
         TermType: termTypeValue,
-        SyllabusURL: doc(db, 'SyllabiURL', docRef.id)
+        SyllabusURL: doc(db, 'SyllabiURL', docRef.id),
+        Textbook: textbookValue,
+
       }
 
       const syllabiRef = await addDoc(collection(db, 'Syllabi'), syllabiDoc);
