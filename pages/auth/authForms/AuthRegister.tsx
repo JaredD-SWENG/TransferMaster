@@ -117,7 +117,7 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
             options={['Student', 'Transfer Specialist', 'Faculty']}
             placeholder="Select role"
           />
-          { role === 'Faculty' && (
+          { role === 'Reviewer' && (
             <>
               <CustomFormLabel htmlFor="department">Department</CustomFormLabel>
               <ComboBoxAutocomplete

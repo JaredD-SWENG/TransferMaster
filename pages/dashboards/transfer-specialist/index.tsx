@@ -103,7 +103,7 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
 
       querySnapshot.forEach((doc) => {
         const userData = doc.data();
-        if (userData.Role === "Faculty") {
+        if (userData.Role === "Reviewer") {
           facultyData.push({
             id: userData.id,
             name: userData.Name,

@@ -132,4 +132,4 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusCo
     );
 };
 
-export default withRole({ Component: Result, roles: ['Faculty', 'Transfer Specialist'] });
+export default withRole({ Component: Result, roles: ['Reviewer', 'Transfer Specialist'] });

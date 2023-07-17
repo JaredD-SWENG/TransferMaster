@@ -222,4 +222,4 @@ const FacultyDashboard: CustomNextPage = () => {
 FacultyDashboard.getLayout = function getLayout(page: ReactElement) {
     return <FullLayout>{page}</FullLayout>;
 };
-export default withRole({ Component: FacultyDashboard, roles: ['Faculty'] });
+export default withRole({ Component: FacultyDashboard, roles: ['Reviewer'] });

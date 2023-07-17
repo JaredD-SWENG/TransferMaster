@@ -19,4 +19,4 @@ Comparison.getLayout = function getLayout(page: ReactElement) {
     return <FullLayout>{page}</FullLayout>;
 };
 
-export default withRole({ Component: Comparison, roles: ['Faculty', 'Transfer Specialist'] });
+export default withRole({ Component: Comparison, roles: ['Reviewer', 'Transfer Specialist'] });

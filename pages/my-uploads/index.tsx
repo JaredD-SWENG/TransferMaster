@@ -167,4 +167,4 @@ MyUploads.getLayout = function getLayout(page: ReactElement) {
   return <FullLayout>{page}</FullLayout>;
 };
 
-export default withRole({ Component: MyUploads, roles: ['Faculty', 'Transfer Specialist'] });
+export default withRole({ Component: MyUploads, roles: ['Reviewer', 'Transfer Specialist'] });

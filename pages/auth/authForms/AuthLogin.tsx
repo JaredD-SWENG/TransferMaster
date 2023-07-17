@@ -55,7 +55,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         router.push("/dashboards/student");
       } else if (role === "Transfer Specialist") {
         router.push("/dashboards/transfer-specialist");
-      } else if (role === "Faculty") {
+      } else if (role === "Reviewer") {
         router.push("/dashboards/faculty");
       }
     } catch (error) {
