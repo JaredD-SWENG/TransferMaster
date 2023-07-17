@@ -3,11 +3,11 @@ import React from 'react';
 import { Box, Button, Grid, Typography } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 import CustomTextField from '../../src/components/forms/theme-elements/CustomTextField';
-import Reviewstatus from '../../src/components/filterUI/Reviewstatus';
+import Reviewstatus from '../../src/components/filterUI/ReviewStatus';
 
-import Coursecategory from '../../src/components/filterUI/Coursecategory';
-import ControlledDatepicker from '../../src/components/filterUI/ControlledDatepicker';
-import Selectreviewer from '../../src/components/filterUI/Selectreviewer';
+import Coursecategory from '../../src/components/filterUI/CourseCategory';
+import ControlledDatepicker from '../../src/components/filterUI/ControlledDatePicker';
+import Selectreviewer from '../../src/components/filterUI/SelectReviewer';
 
 const option1 = ['Option 1', 'Option 2', 'Option 3'];
 

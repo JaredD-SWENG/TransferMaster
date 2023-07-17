@@ -18,10 +18,10 @@ import { IconBellRinging } from '@tabler/icons-react';
 import { Stack } from '@mui/system';
 import Link from 'next/link';
 import FilterUI from '../../../pages/filterUI/FilterUIfaculty';
-import ControlledDatepicker from './ControlledDatepicker';
-import Coursecategory from './Coursecategory';
-import Reviewstatus from './Reviewstatus';
-import Selectfilter from './Selectreviewer';
+import ControlledDatepicker from './ControlledDatePicker';
+import Coursecategory from './CourseCategory';
+import Reviewstatus from './ReviewStatus';
+import Selectfilter from './SelectReviewer';
 
 const Popupfilter = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
