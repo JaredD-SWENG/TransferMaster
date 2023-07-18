@@ -13,7 +13,7 @@ const Selectreviewer = () => (
     defaultValue={[top100Films[13]]}
     filterSelectedOptions
     renderInput={(params) => (
-      <CustomTextField {...params} placeholder="Select reviewer" aria-label="Select reviewer" />
+      <CustomTextField {...params} placeholder="Select faculty" aria-label="Select faculty" />
     )}
   />
 );
