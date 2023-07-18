@@ -84,6 +84,7 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, u
   const [creditsValue, setCreditsValue] = useState<string>('');
   const [institutionValue, setInstitutionValue] = useState<string>('');
   const [textbookValue, setTextbookValue] = useState<string>('');
+  const [learningObjectivesValue, setLearningObjectivesValue] = useState<string[]>([]);
   const [courseCategory, setCourseCategory] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -94,7 +95,7 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, u
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCourseName, setSelectedCourseName] = useState<string>('');
   const [selectedCredits, setSelectedCredits] = useState<number>(0);
- 
+
   
 
   //--------------------------------------------------------------
@@ -143,11 +144,14 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, u
         const creditsHolder = extracted_sections.credits;
         const institutionName = institution ? institution.name : '';
         const textbook = extracted_sections.required_reading;
+        const learningObjectives = extracted_sections.learning_outcomes;
+
         // Initialize the relevant variables
         let courseNameValue = '';
         let institutionValue = '';
         let creditsValue = '';
         let textbookValue = '';
+        let learningObjectivesValue: string[] = [];
 
         if (courseNameHolder && courseNameHolder.length > 0) {
           courseNameValue = courseNameHolder[0].text;
@@ -165,15 +169,18 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, u
           textbookValue = textbook[0].text;
         }
 
-        console.log("textbook:" , textbookValue)
+        if (learningObjectives && learningObjectives.length > 0) {
+          learningObjectivesValue = learningObjectives.map((outcome: { text: string; }) => outcome.text);
+        }
+      
 
-        // Update the institutionValue state to display in the CustomFormLabel
+
+       //Update state variables with values
         setInstitutionValue(institutionValue);
-
-        // Update the code, institution, and credits values in the respective states
         setCodeValue(courseNameValue);
         setCreditsValue(creditsValue);
         setTextbookValue(textbookValue);
+        setLearningObjectivesValue(learningObjectivesValue);
       
 
         
@@ -223,7 +230,7 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, u
           course: courseNameValue,
           credits: parseFloat(creditsValue),
           textbook: textbookValue, // Add the extracted textbook here
-          learningObjectives: [], // Add the extracted learning objectives here
+          learningObjectives: learningObjectivesValue, // Add the extracted learning objectives here
           fullText: fullText,
         };
 
@@ -254,6 +261,7 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, u
               TermType: "Semester",
               SyllabusURL: doc(db, 'SyllabiURL', docRef.id),
               Textbook: textbookValue,
+              Objectives: learningObjectivesValue,
             }
 
             const syllabiRef = await addDoc(collection(db, 'Syllabi'), syllabiDoc);

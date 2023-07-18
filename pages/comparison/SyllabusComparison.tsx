@@ -89,10 +89,12 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
     const [extCourseName, setExtCourseName] = useState("");
     const [extCredits, setExtCredits] = useState(0);
     const [extTextbook, setExtTextbook ] = useState('');
+    const [extObjectives, setExtObjectives ] = useState([]);
         
     const [psuCourseName, setPsuCourseName] = useState("");
     const [psuCredits, setPsuCredits] = useState(0);
     const [psuTextbook, setPsuTextbook ] = useState('');
+    const [psuObjectives, setPsuObjectives] = useState([]);
 
     const [sliderValues, setSliderValues] = useState([0, 0, 0]); // Initialize slider values
     const [open, setOpen] = useState(false); // Initialize dialog open state
@@ -229,8 +231,10 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
         if (data.textbook == null || data.textbook == "" || data.textbook == " ") {
             setPsuTextbook("Not provided")
         } else {
-            setPsuTextbook(data.textbook)
+            setPsuTextbook(data.textbook);
         }
+
+        setPsuObjectives(data.learningObjectives);
     };
       
     useEffect(() => {
@@ -246,10 +250,11 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                 console.log(syllabusDoc)
                 if (syllabusDoc.exists()) {
                     const syllabusData = syllabusDoc.data() as DocumentData;
-                    const { CourseName, Credits, Textbook } = syllabusData;
+                    const { CourseName, Credits, Textbook, Objectives } = syllabusData;
                     setExtCourseName(CourseName);
                     setExtCredits(Credits);
                     setExtTextbook(Textbook);
+                    setExtObjectives(Objectives);
                     const syllabusURLRef = syllabusData.SyllabusURL;
                     const syllabusURLDocSnapshot = await getDoc(syllabusURLRef);
 
@@ -353,7 +358,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                                 course={psuCourseName}
                                 credits={psuCredits}
                                 textbook={psuTextbook}
-                                learningObjectives={learningObjectives}
+                                learningObjectives={psuObjectives}
                             />
                         </Box>
                     </ParentCard>
@@ -364,7 +369,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                             course={extCourseName}
                             credits={extCredits}
                             textbook={extTextbook}
-                            learningObjectives={learningObjectives}
+                            learningObjectives={extObjectives}
                         />
                     </ParentCard>
                 </Grid>
