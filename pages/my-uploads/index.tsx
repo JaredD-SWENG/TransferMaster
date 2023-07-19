@@ -1,4 +1,4 @@
-import React, { ReactElement, useEffect } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from '../../src/store/Store';
 import { format } from 'date-fns';
 import {
@@ -27,19 +27,69 @@ import { TicketType } from '../../src/types/apps/ticket';
 import CustomNextPage from '../../types/custom';
 import withRole from '../../src/components/hocs/withRole';
 import FullLayout from '../../src/layouts/full/FullLayout';
-
+import { auth, db } from '../../config/firebase';
+import { query,addDoc, collection, doc, getDoc, setDoc, updateDoc, where, getDocs, DocumentReference } from 'firebase/firestore';
 
 
 
 const MyUploads: CustomNextPage = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
-
+  const [myUploads, setMyUploads] = useState<any[]>([]);
+  const [courseNames, setCourseNames] = useState<string[]>([]);
+  const [selectedSyllabusId, setSelectedSyllabusId] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedCourseName, setSelectedCourseName] = useState<string>('');
+  const [selectedCredits, setSelectedCredits] = useState<number>(0);
  
 
   useEffect(() => {
     dispatch(fetchTickets());
   }, [dispatch]);
+
+  useEffect(() => {
+    const getUserMyUploads = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const email = user.email;
+        const q = query(collection(db, 'Users'), where('Email', '==', email));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          const userId = userDoc.id;
+          const userData = userDoc.data();
+          const myUploads = userData.MyUploads || [];
+          setMyUploads(myUploads);
+        }
+      }
+    };
+  
+    getUserMyUploads();
+  }, []);
+  
+  
+
+  const getCourseNameFromDocument = async (documentRef: any) => {
+    const firestoreRef = doc(db, 'Syllabi', documentRef);
+    const docSnapshot = await getDoc(firestoreRef);
+    if (docSnapshot.exists()) {
+      const docData = docSnapshot.data() as { CourseName: string } | undefined;
+      return docData?.CourseName || '';
+    }
+    return '';
+  };
+ 
+  
+
+  useEffect(() => {
+    const fetchCourseNames = async () => {
+      const names = await Promise.all(myUploads.map(getCourseNameFromDocument));
+      setCourseNames(names);
+    };
+  
+    fetchCourseNames();
+  }, [myUploads]);
+
 
   
   const getVisibleTickets = (tickets: TicketType[], filter: string, ticketSearch: string) => {
@@ -108,52 +158,29 @@ const MyUploads: CustomNextPage = () => {
               <TableCell>
                 <Typography variant="h6">Syllabus Name</Typography>
               </TableCell>
-            
               <TableCell>
                 <Typography variant="h6">Date</Typography>
-              </TableCell>
-              <TableCell align="right">
-                <Typography variant="h6">Action</Typography>
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {tickets.map((ticket) => (
-              <TableRow key={ticket.Id} hover>
-                <TableCell>{ticket.Id}</TableCell>
-                <TableCell>
-                 
-                    <Typography variant="h6" fontWeight={600} noWrap>
-                      {ticket.ticketTitle}
-                    </Typography>
-                    
-                 
-                </TableCell>
-                
-                <TableCell>
-                  <Typography variant="subtitle1">
-                    {format(new Date(ticket.Date), 'E, MMM d')}
-                  </Typography>
-                </TableCell>
+          {myUploads.map((upload, index) => (
+    <TableRow key={upload}>
+      <TableCell>
+        <Typography variant="h6" fontWeight={600} noWrap>
+          {index}
+        </Typography>
+      </TableCell>
+      <TableCell>
+        <Typography variant="h6" fontWeight={600} noWrap>
+          {courseNames[index]}
+        </Typography>
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
 
-                <TableCell align="right">
-                  {/**Edit */}
-                  <Tooltip title="Edit">
-                    <IconButton onClick={() => dispatch(DeleteTicket(ticket.Id))}>
-                      <IconTrash size="18" />
-                    </IconButton>
-                  </Tooltip>
 
-                  {/**Delete 
-                  <Tooltip title="Delete">
-                    <IconButton onClick={() => dispatch(DeleteTicket(ticket.Id))}>
-                      <IconTrash size="18" />
-                    </IconButton>
-                  </Tooltip>*/}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
         </Table>
       </TableContainer>
       <Box my={3} display="flex" justifyContent={'center'}>
@@ -167,4 +194,4 @@ MyUploads.getLayout = function getLayout(page: ReactElement) {
   return <FullLayout>{page}</FullLayout>;
 };
 
-export default withRole({ Component: MyUploads, roles: ['Faculty', 'Transfer Specialist'] });
+export default withRole({ Component: MyUploads, roles: ['Student', 'Faculty', 'Transfer Specialist'] });

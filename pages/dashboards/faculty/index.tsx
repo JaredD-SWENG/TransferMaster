@@ -181,7 +181,7 @@ const FacultyDashboard: CustomNextPage = () => {
                                                         : request.Status === 'Approved'
                                                             ? (theme) => theme.palette.success.light
                                                             : request.Status === 'Rejected'
-                                                                ? (theme) => theme.palette.info.light
+                                                                ? (theme) => theme.palette.error.light
                                                                 : (theme) => theme.palette.secondary.light,
                                             color:
                                                 request.Status === 'To-do'
@@ -191,7 +191,7 @@ const FacultyDashboard: CustomNextPage = () => {
                                                         : request.Status === 'Approved'
                                                             ? (theme) => theme.palette.success.main
                                                             : request.Status === 'Rejected'
-                                                                ? (theme) => theme.palette.info.main
+                                                                ? (theme) => theme.palette.error.main
                                                                 : (theme) => theme.palette.secondary.main,
                                             borderRadius: '8px',
                                         }}

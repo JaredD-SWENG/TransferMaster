@@ -47,6 +47,7 @@ const StudentUploadPage: CustomNextPage = () => {
   const [textbookValue, setTextBookValue] = useState<string>('');
   const [learningObjectivesValue, setLearningObjectivesValue] = useState<string[]>([]);
   const [isFormComplete, setIsFormComplete] = useState(false);
+  const [userID, setUserID] = useState<string>('');
   const router = useRouter();
 
   const handleTermChange = (value: string) => {
@@ -181,7 +182,9 @@ const handleSubmit = async () => {
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
       userId = userDoc.id;
+      setUserID(userId);
     }
+    console.log(userId);
   }
   if (selectedFile) {
     try {
@@ -209,6 +212,25 @@ const handleSubmit = async () => {
       const syllabiRef = await addDoc(collection(db, 'Syllabi'), syllabiDoc);
       console.log('Syllabus data stored successfully!');
 
+      console.log("userID", userId);
+        //store the external syllabus under the User's myUploads
+        let userDocRef = doc(db, 'Users', userId as string);
+        const userDocSnapshot = await getDoc(userDocRef);
+        // Check if the MyUploads field exists in the user document
+        if (userDocSnapshot.exists() && userDocSnapshot.data().MyUploads) {
+          // If the MyUploads field already exists, add the syllabus document ID to the array
+          const myUploadsArray = userDocSnapshot.data().MyUploads;
+          myUploadsArray.push(syllabiRef.id);
+          console.log("Pushed syllabus ref to MyUploads[]")
+  
+          // Update the user document with the updated MyUploads array
+          await updateDoc(userDocRef, { MyUploads: myUploadsArray });
+        } else {
+          // If the MyUploads field doesn't exist, create it with the syllabus document ID as the first element of the array
+          await setDoc(userDocRef, { MyUploads: [syllabiRef.id] }, { merge: true });
+          console.log("Created MyUploads[] and added the syllabus ref to it")
+        }
+
        //Create and store a request in /Requests (once the syllabus is uploaded )
       const requestDoc = {
         Comments: null,
@@ -224,6 +246,10 @@ const handleSubmit = async () => {
       const requestRef = doc(collection(db, 'Requests')); // Generate a new document reference that can be passed as a URL parameter to another page 
       await setDoc(requestRef, requestDoc);
       console.log('Request data stored successfully!');
+
+     
+
+
 
     } catch (error) {
       console.error('Failed to upload file:', error);
