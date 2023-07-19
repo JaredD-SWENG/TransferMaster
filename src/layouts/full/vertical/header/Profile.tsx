@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Box,
@@ -13,15 +13,59 @@ import * as dropdownData from './data';
 
 import { IconMail } from '@tabler/icons-react';
 import { Stack } from '@mui/system';
-
+import { getAuth, signOut } from "firebase/auth";
+import { auth, db } from '../../../../../config/firebase';
+import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
+import { setUserId } from 'firebase/analytics';
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
+  const [name, setName] = useState<string>('');
+  const [role, setRole] = useState<string>('');
+  const [email, setEmail] = useState<string | null>('');
   const handleClick2 = (event: any) => {
     setAnchorEl2(event.currentTarget);
   };
   const handleClose2 = () => {
     setAnchorEl2(null);
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+
+      const user = auth.currentUser;
+      let userName = null;
+      let userRole = null;
+      if (user) {
+        const email = user.email;
+        const q = query(collection(db, "Users"), where("Email", "==", email));
+        setEmail(email);
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          const userData = userDoc.data();
+          userName = userData.Name;
+          setName(userName);
+          userRole = userData.Role;
+      }
+        console.log(userName);
+      }
+    }; 
+    fetchData();
+}, []);
+
+
+  //logout from firebase
+  const handleLogout = async () => {
+    const auth = getAuth();
+    signOut(auth).then(() => {
+      // Sign-out successful.
+      console.log("Logged out");
+    }).catch((error) => {
+      // An error happened.
+      console.log("Error logging out");
+    });
   };
 
   return (
@@ -66,15 +110,15 @@ const Profile = () => {
           },
         }}
       >
-        <Typography variant="h5">User Profile</Typography>
+        <Typography variant="h5">My Profile</Typography>
         <Stack direction="row" py={3} spacing={2} alignItems="center">
         <Avatar src={"/images/profile/user-1.jpg"} alt={"ProfileImg"} sx={{ width: 95, height: 95 }} />
           <Box>
             <Typography variant="subtitle2" color="textPrimary" fontWeight={600}>
-              Mathew Anderson
+              {name}
             </Typography>
             <Typography variant="subtitle2" color="textSecondary">
-              Designer
+              {role}
             </Typography>
             <Typography
               variant="subtitle2"
@@ -84,7 +128,7 @@ const Profile = () => {
               gap={1}
             >
               <IconMail width={15} height={15} />
-              info@modernize.com
+              {email}
             </Typography>
           </Box>
         </Stack>
@@ -156,7 +200,7 @@ const Profile = () => {
               <img src={"/images/backgrounds/unlimited-bg.png"} alt="unlimited" className="signup-bg"></img>
             </Box>
           </Box>
-          <Button href="/auth/login" variant="outlined" color="primary" component={Link} fullWidth>
+          <Button onClick={handleLogout}href="/auth/auth1/login" variant="outlined" color="primary" component={Link} fullWidth>
             Logout
           </Button>
         </Box>
