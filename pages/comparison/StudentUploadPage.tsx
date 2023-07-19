@@ -45,6 +45,7 @@ const StudentUploadPage: CustomNextPage = () => {
   const [termTypeValue, setTermTypeValue] = useState<string>('');
   const [gradeValue, setGradeValue] = useState<string>('');
   const [textbookValue, setTextBookValue] = useState<string>('');
+  const [learningObjectivesValue, setLearningObjectivesValue] = useState<string[]>([]);
   const [isFormComplete, setIsFormComplete] = useState(false);
   const router = useRouter();
 
@@ -78,13 +79,15 @@ const StudentUploadPage: CustomNextPage = () => {
         const creditsHolder = extracted_sections.credits;
         const institutionName = institution ? institution.name : '';
         const textbook = extracted_sections.required_reading;
-  
+        const learningObjectives = extracted_sections.learning_outcomes;
+
         // Initialize the relevant variables
         let courseNameValue = '';
         let institutionValue = '';
         let creditsValue = '';
         let textbookValue = '';
-  
+        let learningObjectivesValue: string[] = [];
+
         if (courseNameHolder && courseNameHolder.length > 0) {
           courseNameValue = courseNameHolder[0].text;
         }
@@ -100,6 +103,10 @@ const StudentUploadPage: CustomNextPage = () => {
         if(textbook && textbook.length > 0){
           textbookValue = textbook[0].text;
         }
+        
+        if (learningObjectives && learningObjectives.length > 0) {
+          learningObjectivesValue = learningObjectives.map((outcome: { text: string; }) => outcome.text);
+        }
   
         // Update the institutionValue state to display in the CustomFormLabel
         setInstitutionValue(institutionValue);
@@ -108,7 +115,7 @@ const StudentUploadPage: CustomNextPage = () => {
         setCodeValue(courseNameValue);
         setCreditsValue(creditsValue);
         setTextBookValue(textbookValue);
-
+        setLearningObjectivesValue(learningObjectivesValue);
          // Load the PDF document from the bytes
       const loadingTask = getDocument({ data: fileBytes });
       console.log('loadingTask:', loadingTask);
@@ -196,7 +203,7 @@ const handleSubmit = async () => {
         TermType: termTypeValue,
         SyllabusURL: doc(db, 'SyllabiURL', docRef.id),
         Textbook: textbookValue,
-
+        Objectives: learningObjectivesValue,
       }
 
       const syllabiRef = await addDoc(collection(db, 'Syllabi'), syllabiDoc);
