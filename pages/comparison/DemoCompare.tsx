@@ -17,9 +17,8 @@ import CustomFormLabel from "../../src/components/forms/theme-elements/CustomFor
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import CustomRangeSlider from "../../src/components/forms/theme-elements/CustomRangeSlider";
-import { getDoc, DocumentData, doc, DocumentReference } from "firebase/firestore";
-import { db, storage } from "../../config/firebase";
-import UploadPopup from "./UploadPopup";
+import { getDoc, DocumentData, doc, DocumentReference, query, collection, getDocs, where } from "firebase/firestore";
+import { auth, db, storage } from "../../config/firebase";
 import { ref, getBytes, getDownloadURL } from "firebase/storage";
 import { getDocument, GlobalWorkerOptions} from 'pdfjs-dist';
 import axios from "axios";
@@ -34,12 +33,11 @@ import {
   Divider,
 } from '@mui/material';
 import { useSelector, AppState } from '../../src/store/Store';
-
+import DemoUpload from "./DemoUpload";
 
 type Props = {
   title: string;
-  footer?: string | JSX.Element;
-  children: JSX.Element;
+  
   
 };
 
@@ -64,6 +62,8 @@ interface SyllabusDoc {
 interface SyllabusURLDoc {
     fileUrl: string;
 }
+
+
 
 {/**Syllabus Form */}
 const SyllabusForm: React.FC<SyllabusProps> = ({ course, credits, textbook, learningObjectives=[] }) => {
@@ -99,8 +99,101 @@ const SyllabusForm: React.FC<SyllabusProps> = ({ course, credits, textbook, lear
 
 let learningObjectivePercentages: number[];
 
+type ParentCardProps = {
+    title: string;
+    onExtractedData: (data: any) => void;
+    userID: string;
+    footer?: string | JSX.Element;
+    children: JSX.Element;
+  };
+
+  const ParentCardPsuUpload: React.FC<ParentCardProps> = ({ title, onExtractedData, userID, footer, children }) => {
+    //const customizer = useSelector((state: AppState) => state.customizer);
+  
+    const theme = useTheme();
+    const borderColor = theme.palette.divider;
+  
+    return (
+      <Card
+        sx={{
+          padding: 0,
+          //border: !customizer.isCardShadow ? `1px solid ${borderColor}` : 'none',
+        }}
+        //elevation={customizer.isCardShadow ? 9 : 0}
+        //variant={!customizer.isCardShadow ? 'outlined' : undefined}
+      >
+        <CardHeader
+          title={
+            <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+              <Box sx={{ flexGrow: 1, }}>{title}</Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb:-4.3, mt:-1}}>
+                <DemoUpload
+                  onExtractedData={onExtractedData}
+                  userID={userID}
+                />
+              </Box>
+            </Box>
+          }
+          
+        />
+        <Divider />
+  
+        <CardContent>{children}</CardContent>
+        {footer ? (
+          <>
+            <Divider />
+            <Box p={3}>{footer}</Box>
+          </>
+        ) : (
+          ''
+        )}
+      </Card>
+    );
+  };
+
+  const ParentCardExtUpload: React.FC<ParentCardProps> = ({ title, onExtractedData, userID, footer, children }) => {
+    //const customizer = useSelector((state: AppState) => state.customizer);
+  
+    const theme = useTheme();
+    const borderColor = theme.palette.divider;
+  
+    return (
+      <Card
+        sx={{
+          padding: 0,
+          //border: !customizer.isCardShadow ? `1px solid ${borderColor}` : 'none',
+        }}
+        //elevation={customizer.isCardShadow ? 9 : 0}
+        //variant={!customizer.isCardShadow ? 'outlined' : undefined}
+      >
+        <CardHeader
+          title={
+            <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+              <Box sx={{ flexGrow: 1 }}>{title}</Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: -4.3, mt: -1 }}>
+                <DemoUpload onExtractedData={onExtractedData} userID={userID} />
+              </Box>
+            </Box>
+          }
+        />
+        <Divider />
+  
+        <CardContent>{children}</CardContent>
+        {footer ? (
+          <>
+            <Divider />
+            <Box p={3}>{footer}</Box>
+          </>
+        ) : (
+          ''
+        )}
+      </Card>
+    );
+  };
+
+
 {/**SyllabusComparison */}
-const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook, learningObjectives}) => {
+const DemoCompare: React.FC<SyllabusProps> = ({ course, credits, textbook, learningObjectives}) => {
     const [displayText, setDisplayText] = useState('');
   
     const [extCourseName, setExtCourseName] = useState("");
@@ -120,6 +213,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
 
     const [extFullText, setExtFullText] = useState('');
     const [psuFullText, setPsuFullText] = useState('');
+    const [userID, setUserID] = useState('');
 
     //const [learningObjectivePercentages, setLearningObjectivePercentages] = useState<number[] | null>(null);
 
@@ -131,8 +225,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
    
     const router = useRouter();
   
-    const { requestID } = router.query;
-    const { userID } = router.query; 
+    
 
     const [isLoading, setIsLoading] = useState(false);
 
@@ -229,16 +322,70 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
             if(showResult == true){
                 setShowCompare(true);
             }
+            
         }
     };
 
     const handleClose = () => {
         setOpen(false);
     };
+    
+    useEffect(() => {
+        const fetchData = async () => {
+            const user = auth.currentUser;
+            let userId = null; 
+    
+            if (user) {
+                const email = user.email;
+                const q = query(collection(db, "Users"), where("Email", "==", email));
+                const querySnapshot = await getDocs(q);
+    
+                if (!querySnapshot.empty) {
+                    const userDoc = querySnapshot.docs[0];
+                    userId = userDoc.id;
+                    setUserID(userId);
+                  }
+            }
+    
+            
+        };
+        
+        fetchData();
+    }, []);
 
-    const handleExtractedData = (data: { course: any; credits: React.SetStateAction<number>; textbook: any; learningObjectives: any; fullText: string, downloadUrl: string}) => {
+    const handleExtExtractedData = (data: { course: any; credits: React.SetStateAction<number>; textbook: any; learningObjectives: any; fullText: string, downloadUrl: string}) => {
         // Update the state or perform any other actions with the extracted data
         // For example:
+        console.log("in ext");
+        setExtCourseName(data.course);
+       
+        if (Number.isNaN(data.credits) || data.credits === null) {
+            setExtCredits(0);
+        } else {
+            setExtCredits(data.credits);
+        }
+        
+       // console.log("PSUTEXT", data.fullText);
+        setExtFullText(data.fullText);
+
+        //console.log("PSUTEXT", psuFullText);
+        if (data.textbook == null || data.textbook == "" || data.textbook == " ") {
+            setExtTextbook("Not provided")
+        } else {
+            setExtTextbook(data.textbook);
+        }
+
+        setExtObjectives(data.learningObjectives);
+        setExtDownloadUrl(data.downloadUrl);
+
+        
+
+    };
+      
+    const handlePsuExtractedData = (data: { course: any; credits: React.SetStateAction<number>; textbook: any; learningObjectives: any; fullText: string, downloadUrl: string}) => {
+        // Update the state or perform any other actions with the extracted data
+        // For example:
+        console.log("in psu");
         setPsuCourseName(data.course);
         if (Number.isNaN(data.credits) || data.credits === null) {
             setPsuCredits(0);
@@ -258,73 +405,8 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
 
         setPsuObjectives(data.learningObjectives);
         setPsuDownloadUrl(data.downloadUrl);
-        console.log("PSU URL: " + data.downloadUrl);
+    
     };
-      
-    useEffect(() => {
-        const fetchSyllabusData = async () => {
-            //console.log("HELLO???????????????")
-            const { externalSyllabus } = router.query; //get the external syllabus from the query
-                    
-            //get the id from the query 
-            if (externalSyllabus) {
-                const syllabusDocRef = doc(db, externalSyllabus as string)
-                      
-                const syllabusDoc = await getDoc(syllabusDocRef);
-                console.log(syllabusDoc)
-                if (syllabusDoc.exists()) {
-                    const syllabusData = syllabusDoc.data() as DocumentData;
-                    const { CourseName, Credits, Textbook, Objectives } = syllabusData;
-                    setExtCourseName(CourseName);
-                    setExtCredits(Credits);
-                    setExtTextbook(Textbook);
-                    setExtObjectives(Objectives);
-                    const syllabusURLRef = syllabusData.SyllabusURL;
-                    const syllabusURLDocSnapshot = await getDoc(syllabusURLRef);
-
-                    if (syllabusURLDocSnapshot.exists()) {
-                        let syllabusURLDocData = syllabusURLDocSnapshot.data() as SyllabusURLDoc;
-                        let storageFileURL = syllabusURLDocData.fileUrl;
-
-
-                        const fileRef = ref(storage, storageFileURL);
-                        const fileBytes = await getBytes(fileRef);
-                        const downloadUrl = await getDownloadURL(ref(storage, storageFileURL));
-                        setExtDownloadUrl(downloadUrl);
-                        
-                        const loadingTask = getDocument({ data: fileBytes });
-                        const pdf = await loadingTask.promise;
-
-                        loadingTask.promise
-                        .then(async (pdf: { numPages: number; getPage: (arg0: number) => any }) => {
-                            //console.log('Promise resolved. PDF:', pdf);
-
-                            let extFullText = '';
-                            // Loop through each page and extract text
-                            for (let i = 1; i <= pdf.numPages; i++) {
-                                const page = await pdf.getPage(i);
-
-                                // Extract the text content
-                                const content = await page.getTextContent();
-
-                                // Combine the text items into a single string
-                                const text = content.items.map((item: { str: any }) => item.str).join(' ');
-                        
-                                extFullText += text + '\n';
-                                //console.log(psuFullText);
-
-                            }
-                            setExtFullText(extFullText);
-                            //console.log("EXTERNAL", extFullText)
-                        })
-                    }
-
-                    console.log(" EXT URL: " + extDownloadUrl);
-                }
-            }
-        }; 
-        fetchSyllabusData();
-    }, [router.query]);
        
     const [showCompare, setShowCompare] = useState(true);
     const [showResult, setShowResult] = useState(false);
@@ -375,77 +457,38 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
         }
     });
 
-
+    
     //here
-    const ParentCardUpload = ({ title, children, footer }: Props) => {
-        const customizer = useSelector((state: AppState) => state.customizer);
+    
+
       
-        const theme = useTheme();
-        const borderColor = theme.palette.divider;
       
-        return (
-          <Card
-            sx={{
-              padding: 0,
-              border: !customizer.isCardShadow ? `1px solid ${borderColor}` : 'none',
-            }}
-            elevation={customizer.isCardShadow ? 9 : 0}
-            variant={!customizer.isCardShadow ? 'outlined' : undefined}
-          >
-            <CardHeader
-              title={
-                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                  <Box sx={{ flexGrow: 1, }}>{title}</Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb:-4.3, mt:-1}}>
-                    <UploadPopup
-                      onExtractedData={handleExtractedData}
-                      requestID={requestID}
-                      userID={userID}
-                    />
-                  </Box>
-                </Box>
-              }
-              
-            />
-            <Divider />
-      
-            <CardContent>{children}</CardContent>
-            {footer ? (
-              <>
-                <Divider />
-                <Box p={3}>{footer}</Box>
-              </>
-            ) : (
-              ''
-            )}
-          </Card>
-        );
-      };
-      
+    
 
     return (
         <PageContainer>
             <h1>Syllabus Comparison</h1>
             <Grid container spacing={3} mt={3}>
                 <Grid item xs={12} lg={6}>
-                    <ParentCardUpload title="Penn State">
+                <ParentCardPsuUpload title="Penn State" onExtractedData={handlePsuExtractedData} userID={userID}>
                             <SyllabusForm
                                 course={psuCourseName}
                                 credits={psuCredits}
                                 textbook={psuTextbook}
                                 learningObjectives={psuObjectives}
                             />
-                    </ParentCardUpload>
+                    </ParentCardPsuUpload>
                 </Grid>
                 <Grid item xs={12} lg={6}>
-                    <ParentCard title="External School">
+                <ParentCardExtUpload title="External School" onExtractedData={handleExtExtractedData} userID={userID}>
                         <SyllabusForm
                             course={extCourseName}
                             credits={extCredits}
                             textbook={extTextbook}
                             learningObjectives={extObjectives}
                         />
-                    </ParentCard>
+                    </ParentCardExtUpload>
+                
                 </Grid>
                 <Grid item xs={12} lg={16}>
                     <Box display={'flex'} flexDirection={'row'} alignItems={'center'} gap={5}>
@@ -514,4 +557,4 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
     );
 };
 
-export default SyllabusComparison;
+export default DemoCompare;

@@ -9,17 +9,47 @@ import React from "react";
 import { TransitionProps } from "@mui/material/transitions";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../config/firebase";
-import router from "next/router";
+import { useRouter } from "next/router";
 import { IconSend } from "@tabler/icons-react";
+import axios from "axios";
+import ChatBox from "./ChatBox";
+
+
 
 interface ResultProps {
     syllabusComponents: any;
+    psuUrl: string,
+    extUrl: string,
 }
 
-const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusComponents}) => {
+const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusComponents, psuUrl, extUrl}) => {
     const [status, setStatus] = useState('');
     const [open, setOpen] = useState(false);
     const [message, setMessage] = useState('');
+    const [openChat, setOpenChat] = useState(false);
+  const [chatHistory, setChatHistory] = useState<string[]>([]);
+
+    const handleOpenChat = () => {
+        setOpenChat(true);
+      };
+    
+      const handleCloseChat = () => {
+        setOpenChat(false);
+      };
+
+      const handleSendMessage = async (message: string) => {
+        // Display the message in the chatbox
+        addToChatHistory(` ${message}`);
+    
+        // Call the chatBot function passing in the message
+        const response = await callChatbot(message);
+        // Display the answer in the chatbox
+        addToChatHistory(`${response}`);
+      };
+    
+      const addToChatHistory = (msg: string) => {
+        setChatHistory((prevHistory) => [...prevHistory, msg]);
+      };
     
     const DynamicBarChart = dynamic(() => import('./BarChart'), { ssr: false });
     // const Transition = React.forwardRef(function Transition(
@@ -30,6 +60,7 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusCo
     // ) {
     //     return <Slide direction="up" ref={ref} {...props} />;
     // });
+    const router = useRouter();
     const requestID = router.query.requestID as string;
 
     const handleApproveClickOpen = () => {
@@ -55,19 +86,51 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusCo
         setMessage(event.target.value);
     };
     const handleClickMessage = () => {
-        console.log('inside handleClickMessage')
+        console.log('dumb')
     };
+
+    async function callChatbot(inputQuestion:string) {
+        console.log("psu: " + psuUrl);
+        console.log("ext: " + extUrl);
+        try {
+            const response = await axios.post('https://uubvngwolz7s5nfuregjlgmrmy0kwpfk.lambda-url.us-east-1.on.aws/', {
+                psuURL: psuUrl,
+                extURL: extUrl,
+                question: inputQuestion
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            console.log(response)
+            const answer = response.data;
+            console.log("Response from GPT:", answer);
+            return answer;
+    
+           
+          
+        } catch (error) {
+          console.error(`Error calling lambda function: ${error}`);
+          return "Error calling";
+        }
+    }
+
 
     return (
         <PageContainer>
             <h1>Comparison Results</h1>
             <Grid item xs={12} mt={3} display="flex" justifyContent="right" alignItems="center">
-                <Button variant="contained" component="span" onClick={handleClickMessage}>
-                    <IconButton>
-                        <IconSend stroke={1.5} color="white" size="20" />
-                    </IconButton>
-                    Chat with syllabus
-                </Button>
+            <Button variant="contained" component="span" onClick={handleOpenChat}>
+        Chat with syllabus
+      </Button>
+
+      {/* Add the ChatBox component */}
+      <ChatBox
+        open={openChat}
+        onClose={handleCloseChat}
+        onSendMessage={handleSendMessage}
+        chatHistory={chatHistory}
+      />
             </Grid>
             {/*</PageContainer>{learningObjectivePercentages && (*/}
                 <Typography mt={6}>
@@ -132,4 +195,4 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusCo
     );
 };
 
-export default withRole({ Component: Result, roles: ['Faculty', 'Transfer Specialist'] });
+export default Result;

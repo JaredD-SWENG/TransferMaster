@@ -108,6 +108,9 @@ const Navigations = () => {
                     </Paper>
                 )}
             </Box> */}
+            <StyledButton color="inherit" variant="text" href="/comparison/DemoCompare">
+                Demo
+            </StyledButton>
             <StyledButton color="inherit" variant="text" href="https://drive.google.com/file/d/1wQ0tT1TbGr4QcA5uKHIwaVUJpD5VKL5n/view?usp=sharing">
                 Documentation
             </StyledButton>

@@ -62,7 +62,7 @@ interface SyllabusURLDoc {
 
 
 interface UploadPopupProps {
-  requestID: string | string[] | undefined;
+  
   userID: string | string[] | undefined; 
   onExtractedData: (data: SyllabusProps) => void;
 }
@@ -77,7 +77,7 @@ const Transition = React.forwardRef(function Transition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, userID }) => {
+const PsuUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, userID }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [documentId, setDocumentId] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -102,13 +102,15 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, u
 
   //--------------------------------------------------------------
 
-  const handleUploadBtnClick = (event: any) => {
+  const handlePsuUploadBtnClick = (event: any) => {
+    console.log("PSU SET ANCHOR--------------------------")
     setAnchorEl(event.currentTarget);
    
   };
 
   // OS Parser API call
   async function parse_doc(data: any) {
+    
     const api_token = '9c263dc72cfcf24432a1ae9acdab709c55ba14f4';
     const response = await axios.post(
       'https://parser-api.opensyllabus.org/v1/',
@@ -122,7 +124,8 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, u
     return response.data;
   }
 
-  const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handlePsuFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
+    console.log("PSU FILE SELECT--------------------------")
     const file = event.target.files?.[0] || null;
     setSelectedFile(file);
 
@@ -281,14 +284,7 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, u
               console.log("Created MyUploads[] and added the syllabus ref to it")
             }
 
-            //here
-            let requestDocRef = doc(db, 'Requests', requestID as string); 
-
-            await updateDoc(requestDocRef, {
-                PSUSyllabus: doc(db, 'Syllabi', syllabiRef.id) // Replace 'YourPSUSyllabusCollectionName' with your actual PSUSyllabus collection name
-            });
-            console.log('Request updated successfully!');
-
+           
             console.log("INSIDE POPUP: " + downloadUrl)
             // Create the extracted data object
             const extractedData: SyllabusProps = {
@@ -316,7 +312,7 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, u
        .catch((error: any) => {
         console.error('Error loading PDF:', error);
       });
-        handleClose();  // Close the popup here
+        handlePsuClose();  // Close the popup here
         
       } catch (error) {
         console.error('Failed to parse document:', error);
@@ -329,7 +325,7 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, u
 
  
   
-  const handleClose = () => {
+  const handlePsuClose = () => {
     setAnchorEl(null);
   };
 
@@ -533,7 +529,7 @@ const handleOkClick = async () => {
             });
         }
     
-        handleClose();  // Close the popup here
+        handlePsuClose();  // Close the popup here
     
       
       }} catch (error) {
@@ -557,7 +553,7 @@ const handleOkClick = async () => {
         <Button
           variant="contained"
           component="span"
-          onClick={handleUploadBtnClick}
+          onClick={handlePsuUploadBtnClick}
         >
           Upload File
         </Button>
@@ -565,7 +561,7 @@ const handleOkClick = async () => {
           open={open}
           TransitionComponent={Transition}
           keepMounted
-          onClose={handleClose}
+          onClose={handlePsuClose}
           fullWidth
           aria-labelledby="alert-dialog-slide-title"
           aria-describedby="alert-dialog-slide-description"
@@ -583,10 +579,10 @@ const handleOkClick = async () => {
                     <Input
                       type="file"
                       style={{ display: 'none' }}
-                      id="file-upload"
-                      onChange={handleFileSelect}
+                      id="file-upload-psu"
+                      onChange={handlePsuFileSelect}
                     />
-                    <label htmlFor="file-upload">
+                    <label htmlFor="file-upload-psu">
                       <Button variant="contained" component="span">
                         Upload New
                       </Button>
@@ -675,4 +671,4 @@ const handleOkClick = async () => {
   );
 };
 
-export default UploadPopup;
+export default PsuUploadPopupPreeval;

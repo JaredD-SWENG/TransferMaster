@@ -66,15 +66,21 @@ const profile: ProfileType[] = [
     icon: "/images/svgs/icon-account.svg",
   },
   {
-    href: "/apps/email",
-    title: "My Inbox",
-    subtitle: "Messages & Emails",
+    href: "/dashboards/navigator",
+    title: "My Dashboard",
+    subtitle: "Transfer Credit Evaluation Requests",
     icon: "/images/svgs/icon-inbox.svg",
   },
   {
+    href: "/my-uploads/",
+    title: "My Uploads",
+    subtitle: "Uploaded Syllabi",
+    icon: "/images/svgs/icon-briefcase.svg",
+  },
+  {
     href: "/apps/notes",
-    title: "My Tasks",
-    subtitle: "To-do and Daily Tasks",
+    title: "Pre-Evaluate",
+    subtitle: "Check Two Syllabi",
     icon: "/images/svgs/icon-tasks.svg",
   },
 ];
