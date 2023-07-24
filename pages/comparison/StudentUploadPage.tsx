@@ -45,7 +45,9 @@ const StudentUploadPage: CustomNextPage = () => {
   const [termTypeValue, setTermTypeValue] = useState<string>('');
   const [gradeValue, setGradeValue] = useState<string>('');
   const [textbookValue, setTextBookValue] = useState<string>('');
+  const [learningObjectivesValue, setLearningObjectivesValue] = useState<string[]>([]);
   const [isFormComplete, setIsFormComplete] = useState(false);
+  const [userID, setUserID] = useState<string>('');
   const router = useRouter();
 
   const handleTermChange = (value: string) => {
@@ -78,13 +80,15 @@ const StudentUploadPage: CustomNextPage = () => {
         const creditsHolder = extracted_sections.credits;
         const institutionName = institution ? institution.name : '';
         const textbook = extracted_sections.required_reading;
-  
+        const learningObjectives = extracted_sections.learning_outcomes;
+
         // Initialize the relevant variables
         let courseNameValue = '';
         let institutionValue = '';
         let creditsValue = '';
         let textbookValue = '';
-  
+        let learningObjectivesValue: string[] = [];
+
         if (courseNameHolder && courseNameHolder.length > 0) {
           courseNameValue = courseNameHolder[0].text;
         }
@@ -100,6 +104,10 @@ const StudentUploadPage: CustomNextPage = () => {
         if(textbook && textbook.length > 0){
           textbookValue = textbook[0].text;
         }
+        
+        if (learningObjectives && learningObjectives.length > 0) {
+          learningObjectivesValue = learningObjectives.map((outcome: { text: string; }) => outcome.text);
+        }
   
         // Update the institutionValue state to display in the CustomFormLabel
         setInstitutionValue(institutionValue);
@@ -108,7 +116,7 @@ const StudentUploadPage: CustomNextPage = () => {
         setCodeValue(courseNameValue);
         setCreditsValue(creditsValue);
         setTextBookValue(textbookValue);
-
+        setLearningObjectivesValue(learningObjectivesValue);
          // Load the PDF document from the bytes
       const loadingTask = getDocument({ data: fileBytes });
       console.log('loadingTask:', loadingTask);
@@ -174,7 +182,9 @@ const handleSubmit = async () => {
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
       userId = userDoc.id;
+      setUserID(userId);
     }
+    console.log(userId);
   }
   if (selectedFile) {
     try {
@@ -196,11 +206,30 @@ const handleSubmit = async () => {
         TermType: termTypeValue,
         SyllabusURL: doc(db, 'SyllabiURL', docRef.id),
         Textbook: textbookValue,
-
+        Objectives: learningObjectivesValue,
       }
 
       const syllabiRef = await addDoc(collection(db, 'Syllabi'), syllabiDoc);
       console.log('Syllabus data stored successfully!');
+
+      console.log("userID", userId);
+        //store the external syllabus under the User's myUploads
+        let userDocRef = doc(db, 'Users', userId as string);
+        const userDocSnapshot = await getDoc(userDocRef);
+        // Check if the MyUploads field exists in the user document
+        if (userDocSnapshot.exists() && userDocSnapshot.data().MyUploads) {
+          // If the MyUploads field already exists, add the syllabus document ID to the array
+          const myUploadsArray = userDocSnapshot.data().MyUploads;
+          myUploadsArray.push(syllabiRef.id);
+          console.log("Pushed syllabus ref to MyUploads[]")
+  
+          // Update the user document with the updated MyUploads array
+          await updateDoc(userDocRef, { MyUploads: myUploadsArray });
+        } else {
+          // If the MyUploads field doesn't exist, create it with the syllabus document ID as the first element of the array
+          await setDoc(userDocRef, { MyUploads: [syllabiRef.id] }, { merge: true });
+          console.log("Created MyUploads[] and added the syllabus ref to it")
+        }
 
        //Create and store a request in /Requests (once the syllabus is uploaded )
       const requestDoc = {
@@ -217,6 +246,10 @@ const handleSubmit = async () => {
       const requestRef = doc(collection(db, 'Requests')); // Generate a new document reference that can be passed as a URL parameter to another page 
       await setDoc(requestRef, requestDoc);
       console.log('Request data stored successfully!');
+
+     
+
+
 
     } catch (error) {
       console.error('Failed to upload file:', error);

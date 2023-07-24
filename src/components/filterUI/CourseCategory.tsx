@@ -5,19 +5,23 @@ import CustomTextField from '../forms/theme-elements/CustomTextField';
 
 const coursecategories = ['Biology', 'Chemistry', 'SRA'];
 
+interface Filter {
+    value: string | null;
+    type: string;
+}
+
 interface CourseCategoryProps {
-    onSelect: (value: string | null) => void;
+    onSelect: (value: Filter | null) => void;
 }
 
 const CourseCategory: React.FC<CourseCategoryProps> = ({ onSelect }) => {
     const [value, setValue] = React.useState<string | null>(coursecategories[0]);
     const [inputValue, setInputValue] = React.useState('');
 
-    const handleChange = async (event: React.SyntheticEvent<Element, Event>, newValue: string | null) => {
-        setValue(newValue);
-        console.log(newValue)
-        onSelect(newValue);
-    }
+    const handleChange = (event: React.SyntheticEvent<Element, Event>, value: string | null) => {
+        let filter: Filter = {value: value, type: 'category'}
+        onSelect(filter);
+    };
 
     return (
         <>

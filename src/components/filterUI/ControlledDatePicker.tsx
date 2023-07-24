@@ -6,16 +6,21 @@ import top100Films from '../forms/form-elements/autoComplete/data';
 
 const dates = ['last 7 days', 'last 14 days', 'last 21 days', 'last 30 days', 'custom date'];
 
+interface Filter {
+    value: string | null;
+    type: string;
+}
+
 interface ControlledDatePickerProps {
-    onSelect: (value: string | null) => void;
+    onSelect: (value: Filter | null) => void;
 }
 
 const ControlledDatePicker: React.FC<ControlledDatePickerProps> = ({ onSelect }) => {
 
-    const handleChange = async (event: React.SyntheticEvent<Element, Event>, newValue: string | null) => {
-        console.log(newValue)
-        onSelect(newValue);
-    }
+    const handleChange = (event: React.SyntheticEvent<Element, Event>, value: string | null) => {
+        let filter: Filter = {value: value, type: 'date'}
+        onSelect(filter);
+    };
 
     return (
         <Autocomplete

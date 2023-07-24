@@ -3,41 +3,43 @@ import React from 'react';
 import { Box, Button, Grid, Typography } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 import CustomTextField from '../../src/components/forms/theme-elements/CustomTextField';
-import Reviewstatus from '../../src/components/filterUI/ReviewStatus';
-
-import Coursecategory from '../../src/components/filterUI/CourseCategory';
+import ReviewStatus from '../../src/components/filterUI/ReviewStatus';
+import CourseCategory from '../../src/components/filterUI/CourseCategory';
 import ControlledDatepicker from '../../src/components/filterUI/ControlledDatePicker';
-import Selectreviewer from '../../src/components/filterUI/SelectReviewer';
+import SelectReviewer from '../../src/components/filterUI/SelectReviewer';
 
 const option1 = ['Option 1', 'Option 2', 'Option 3'];
 
-const FilterUI = () => {
-  const [value, setValue] = React.useState<string | null>(option1[0]);
-  const [inputValue, setInputValue] = React.useState('');
+interface Filter {
+    value: string | null;
+    type: string;
+}
 
-  return (
-    <>
-    
-        <Grid item xs={12} lg={16} m={4}>
+interface TCSFilterProps {
+    onSelect: (value: Filter | null) => void;
+}
+
+const TCSFilter: React.FC<TCSFilterProps> = ({ onSelect }) => {
+    return (
+        <>
+            <Grid item xs={12} lg={16} m={4}>
                 <Box display={'flex'} flexDirection={'row'} alignItems={'center'} gap={5}>
                     <Box display={'flex'} justifyContent={'flex-start'} alignItems={'center'} flex={1}>
-                       <Coursecategory/>
+                        <CourseCategory onSelect={onSelect} />
                     </Box>
                     <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
-                        <Reviewstatus />
+                        <ReviewStatus onSelect={onSelect} />
                     </Box>
                     <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
-                        <ControlledDatepicker/>
+                        <ControlledDatepicker onSelect={onSelect} />
                     </Box>
                     <Box display={'flex'} justifyContent={'flex-end'} alignItems={'center'} flex={1}>
-                       <Selectreviewer/>
+                        <SelectReviewer onSelect={onSelect} />
                     </Box>
-                  </Box>
-              
+                </Box>
             </Grid>
-
-    </>
-  );
+        </>
+    );
 };
 
-export default FilterUI;
+export default TCSFilter;

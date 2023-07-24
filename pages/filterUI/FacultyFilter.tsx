@@ -7,8 +7,13 @@ import ControlledDatePicker from '../../src/components/filterUI/ControlledDatePi
 
 const option1 = ['Option 1', 'Option 2', 'Option 3'];
 
+interface Filter {
+    value: string | null;
+    type: string;
+}
+
 interface FacultyFilterProps {
-    onSelect: (value: string[] | null) => void;
+    onSelect: (value: Filter | null) => void;
 }
 
 const FacultyFilter: React.FC<FacultyFilterProps> = ({ onSelect }) => {
@@ -18,28 +23,18 @@ const FacultyFilter: React.FC<FacultyFilterProps> = ({ onSelect }) => {
     const [reviewStatus, setReviewStatus] = useState<string | null>(null);
     const [date, setDate] = useState<string | null>(null);
 
-    const handleCourseCategorySelect = (value: string | null) => {
-        setCourseCategory(value);
-    }
-    const handleReviewStatusSelect = (value: string | null) => {
-        setReviewStatus(value);
-    }
-    const handleDateSelect = (value: string | null) => {
-        setDate(value);
-    }
-
     return (
         <>
             <Grid item xs={12} lg={16} m={4}>
                 <Box display={'flex'} flexDirection={'row'} alignItems={'center'} gap={5}>
                     <Box display={'flex'} justifyContent={'flex-start'} alignItems={'center'} flex={1}>
-                        <CourseCategory onSelect={handleCourseCategorySelect} />
+                        <CourseCategory onSelect={onSelect} />
                     </Box>
                     <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
-                        <ReviewStatus onSelect={handleReviewStatusSelect} />
+                        <ReviewStatus onSelect={onSelect} />
                     </Box>
                     <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
-                        <ControlledDatePicker onSelect={handleDateSelect} />
+                        <ControlledDatePicker onSelect={onSelect} />
                     </Box>
                 </Box>
             </Grid>

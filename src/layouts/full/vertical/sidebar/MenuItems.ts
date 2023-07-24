@@ -76,7 +76,6 @@ const Menuitems: MenuitemsType[] = [
     title: 'Dashboard',
     icon: IconAperture,
     href: '/dashboards/navigator',
-    chip: 'New',
     chipColor: 'secondary',
   },
   {
@@ -89,14 +88,14 @@ const Menuitems: MenuitemsType[] = [
   //   navlabel: true,
   //   subheader: 'Apps',
   // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Contacts',
-  //   icon: IconPackage,
-  //   chip: '2',
-  //   chipColor: 'secondary',
-  //   href: '/apps/contacts',
-  // },
+  {
+    id: uniqueId(),
+    title: 'Pre-Evaluate',
+    icon: IconFiles,
+    chip: 'New',
+    chipColor: 'secondary',
+    href: '/comparison/PreEvaluate',
+  },
 
   // {
   //   id: uniqueId(),

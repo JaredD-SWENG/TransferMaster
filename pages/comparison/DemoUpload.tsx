@@ -62,7 +62,7 @@ interface SyllabusURLDoc {
 
 
 interface UploadPopupProps {
-  requestID: string | string[] | undefined;
+  
   userID: string | string[] | undefined; 
   onExtractedData: (data: SyllabusProps) => void;
 }
@@ -77,7 +77,7 @@ const Transition = React.forwardRef(function Transition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, userID }) => {
+const DemoUpload: React.FC<UploadPopupProps> = ({ onExtractedData, userID }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [documentId, setDocumentId] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -98,13 +98,14 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, u
   const [selectedCredits, setSelectedCredits] = useState<number>(0);
   const [selectedTextbook, setSelectedTextbook] = useState<string>('');
   const [selectedObjectives, setSelectedObjectives] = useState<string[]>([]);
-  
+
 
   //--------------------------------------------------------------
 
-  const handleUploadBtnClick = (event: any) => {
+  const handleExtUploadBtnClick = (event: any) => {
+    
     setAnchorEl(event.currentTarget);
-   
+    //handleExtFileSelect(event);
   };
 
   // OS Parser API call
@@ -122,232 +123,25 @@ const UploadPopup: React.FC<UploadPopupProps> = ({ onExtractedData, requestID, u
     return response.data;
   }
 
-  const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] || null;
-    setSelectedFile(file);
-
-    if (file) {
-      try {
-        setLoading(true);
-
-        // Read the file as an ArrayBuffer
-        const fileBytes = await file.arrayBuffer();
-
-        // Convert the ArrayBuffer to a Uint8Array for sending as binary data in the API request
-        const fileData = new Uint8Array(fileBytes);
-
-        // Call the parse_doc API function with the fileData
-        const apiResponse = await parse_doc(fileData);
-        console.log('OS API RESPONSE:', apiResponse);
-
-        // Get the extracted data from the response
-        const { extracted_sections, institution } = apiResponse.data;
-        const courseNameHolder = extracted_sections.code;
-        const creditsHolder = extracted_sections.credits;
-        const institutionName = institution ? institution.name : '';
-        const textbook = extracted_sections.required_reading;
-        const learningObjectives = extracted_sections.learning_outcomes;
-
-        // Initialize the relevant variables
-        let courseNameValue = '';
-        let institutionValue = '';
-        let creditsValue = '';
-        let textbookValue = '';
-        let learningObjectivesValue: string[] = [];
-
-        if (courseNameHolder && courseNameHolder.length > 0) {
-          courseNameValue = courseNameHolder[0].text;
-        }
-
-        if (institutionName) {
-          institutionValue = institutionName;
-        }
-
-        if (creditsHolder && creditsHolder.length > 0) {
-          creditsValue = creditsHolder[0].text;
-        }
-
-        if (textbook && textbook.length > 0) {
-          textbookValue = textbook[0].text;
-        }
-
-        if (learningObjectives && learningObjectives.length > 0) {
-          learningObjectivesValue = learningObjectives.map((outcome: { text: string; }) => outcome.text);
-        }
-      
-
-
-       //Update state variables with values
-        setInstitutionValue(institutionValue);
-        setCodeValue(courseNameValue);
-        setCreditsValue(creditsValue);
-        setTextbookValue(textbookValue);
-        setLearningObjectivesValue(learningObjectivesValue);
-      
-
-        
-        // Load the PDF document from the bytes
-       const loadingTask = getDocument({ data: fileBytes });
-       console.log('loadingTask:', loadingTask);
-
-       loadingTask.promise
-       .then(async (pdf: { numPages: number; getPage: (arg0: number) => any }) => {
-         console.log('Promise resolved. PDF:', pdf);
-         let fullText = '';
-
-         // Loop through each page and extract text
-         for (let i = 1; i <= pdf.numPages; i++) {
-           const page = await pdf.getPage(i);
-
-           // Extract the text content
-           const content = await page.getTextContent();
-
-           // Combine the text items into a single string
-           const text = content.items.map((item: { str: any }) => item.str).join(' ');
-
-           fullText += text + '\n';
-         }
-
-        const user = auth.currentUser;
-
-        if (user) {
-          const email = user.email;
-          const q = query(collection(db, "Users"), where("Email", "==", email));
-          const querySnapshot = await getDocs(q);
-
-          if (!querySnapshot.empty) {
-            const userDoc = querySnapshot.docs[0];
-            const userData = userDoc.data();
-           
-            setCourseCategory(userData.Department);
-        }
-        
-        }
-
-        //console.log(courseCategory)
-        
-
-        
-        //  //file upload to firebase
-       
-         try{
-
-           //Create a reference to firebase storage and store the uploaded file in /uploads 
-            const storageRef = ref(storage, 'uploads/' + file.name);
-            await uploadBytes(storageRef, file);
-            const downloadUrl = await getDownloadURL(ref(storage, storageRef.fullPath));
-            setDownloadUrl(downloadUrl);
-            //Store the uploaded syllabus's path in /SyllabiURL
-            const docRef = await addDoc(collection(db, 'SyllabiURL'), { fileUrl: storageRef.fullPath });
-            setDocumentId(docRef.id);
-            console.log('File uploaded successfully!');
-
-            //console.log("CC", courseCategory)
-
-            //Store the extracted sections and user-enetered fields in /Syllabi
-            const syllabiDoc = {
-              InstitutionName: institutionValue,
-              CourseName: courseNameValue,
-              Credits: Number(creditsValue),
-              CourseCategory: courseCategory,
-              TermType: "Semester",
-              SyllabusURL: doc(db, 'SyllabiURL', docRef.id),
-              Textbook: textbookValue,
-              Objectives: learningObjectivesValue,
-            }
-
-            const syllabiRef = await addDoc(collection(db, 'Syllabi'), syllabiDoc);
-            console.log('Syllabus data stored successfully!');
-
-            console.log("UserID", userID);
-            //store the PSU syllabus under the User's myUploads
-            let userDocRef = doc(db, 'Users', userID as string);
-
-            // Get the user document from Firestore
-            const userDocSnapshot = await getDoc(userDocRef);
-
-            // Check if the MyUploads field exists in the user document
-            if (userDocSnapshot.exists() && userDocSnapshot.data().MyUploads) {
-              // If the MyUploads field already exists, add the syllabus document ID to the array
-              const myUploadsArray = userDocSnapshot.data().MyUploads;
-              myUploadsArray.push(syllabiRef.id);
-              console.log("Pushed syllabus ref to MyUploads[]")
-
-              // Update the user document with the updated MyUploads array
-              await updateDoc(userDocRef, { MyUploads: myUploadsArray });
-            } else {
-              // If the MyUploads field doesn't exist, create it with the syllabus document ID as the first element of the array
-              await setDoc(userDocRef, { MyUploads: [syllabiRef.id] }, { merge: true });
-              console.log("Created MyUploads[] and added the syllabus ref to it")
-            }
-
-            //here
-            let requestDocRef = doc(db, 'Requests', requestID as string); 
-
-            await updateDoc(requestDocRef, {
-                PSUSyllabus: doc(db, 'Syllabi', syllabiRef.id) // Replace 'YourPSUSyllabusCollectionName' with your actual PSUSyllabus collection name
-            });
-            console.log('Request updated successfully!');
-
-            console.log("INSIDE POPUP: " + downloadUrl)
-            // Create the extracted data object
-            const extractedData: SyllabusProps = {
-              course: courseNameValue,
-              credits: parseFloat(creditsValue),
-              textbook: textbookValue, // Add the extracted textbook here
-              learningObjectives: learningObjectivesValue, // Add the extracted learning objectives here
-              fullText: fullText,
-              downloadUrl: downloadUrl,
-              };
-
-              // Call the onExtractedData callback function with the extracted data
-              onExtractedData(extractedData);
-
-
-
-
-
-          } catch (error) {
-            console.error('Failed to upload file:', error);
-          }
-
-        
-       })
-       .catch((error: any) => {
-        console.error('Error loading PDF:', error);
-      });
-        handleClose();  // Close the popup here
-        
-      } catch (error) {
-        console.error('Failed to parse document:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-  };
-
+  
  
   
-  const handleClose = () => {
+  const handleExtClose = () => {
     setAnchorEl(null);
   };
 
   //MyUploads code--------------------------------------------------------------
   useEffect(() => {
     const getUserMyUploads = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        const email = user.email;
-        const q = query(collection(db, 'Users'), where('Email', '==', email));
+     
+        const q = query(collection(db, 'DemoSyllabi'));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
           const userDoc = querySnapshot.docs[0];
-          const userId = userDoc.id;
           const userData = userDoc.data();
           const myUploads = userData.MyUploads || [];
           setMyUploads(myUploads);
-        }
+        
       }
     };
   
@@ -533,7 +327,7 @@ const handleOkClick = async () => {
             });
         }
     
-        handleClose();  // Close the popup here
+        handleExtClose();  // Close the popup here
     
       
       }} catch (error) {
@@ -557,7 +351,7 @@ const handleOkClick = async () => {
         <Button
           variant="contained"
           component="span"
-          onClick={handleUploadBtnClick}
+          onClick={handleExtUploadBtnClick}
         >
           Upload File
         </Button>
@@ -565,7 +359,7 @@ const handleOkClick = async () => {
           open={open}
           TransitionComponent={Transition}
           keepMounted
-          onClose={handleClose}
+          onClose={handleExtClose}
           fullWidth
           aria-labelledby="alert-dialog-slide-title"
           aria-describedby="alert-dialog-slide-description"
@@ -573,39 +367,11 @@ const handleOkClick = async () => {
           <DialogTitle id="alert-dialog-slide-title" variant="h5">
             Upload File
           </DialogTitle>
-          <Grid m={4}>
-            <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
-              <Grid m={4}>
-                {loading ? (
-                  <p>Loading...</p>
-                ) : (
-                  <>
-                    <Input
-                      type="file"
-                      style={{ display: 'none' }}
-                      id="file-upload"
-                      onChange={handleFileSelect}
-                    />
-                    <label htmlFor="file-upload">
-                      <Button variant="contained" component="span">
-                        Upload New
-                      </Button>
-                    </label>
-                  </>
-                )}
-              </Grid>
-            </Box>
-
-            <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
-              <Grid m={2}>or</Grid>
-            </Box>
-
-            
-              <Grid m={4}>
+          
              
        
               <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
-         <p>Choose from your existing files</p>
+         <p>Choose a Syllabus</p>
          </Box>
          <Box>
   <TextField
@@ -657,9 +423,7 @@ const handleOkClick = async () => {
          <Pagination count={10} color="primary" />
        </Box>
 
-              </Grid>
-          
-          </Grid>
+              
 
           {/**Upload Btn Actions */}
          
@@ -675,4 +439,4 @@ const handleOkClick = async () => {
   );
 };
 
-export default UploadPopup;
+export default DemoUpload;
