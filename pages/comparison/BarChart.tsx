@@ -218,13 +218,13 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
               				<Typography variant='h4' mt={3}>
                 				Learning Objectives Summary
               				</Typography>
-              				<Typography variant='body1' mt={1}>
+              				<Typography variant='body1' mt={1} whiteSpace={'pre-line'}>
                 				{learningObjectives?.lo_summary}
               				</Typography>
               				<Typography variant='h4' mt={3}>
                 				Topics Covered Summary
               				</Typography>
-              				<Typography variant='body1' mt={1}>
+              				<Typography variant='body1' mt={1} whiteSpace={'pre-line'}>
                 				{learningObjectives?.topics_summary}
               				</Typography>
             			</>
@@ -233,28 +233,28 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
               				<Typography variant='h3' mt={3}>
                 				Textbook Information
               				</Typography>
-              				<Typography variant='h5' mt={3}>
+              				<Typography variant='h5' mt={3} whiteSpace={'pre-line'}>
                 				PSU Textbook: {textbook?.psuTextbook}
               				</Typography>
               				<Typography variant='h6' mt={3}>
                 				Description:
               				</Typography>
-              				<Typography variant='body1'>
+              				<Typography variant='body1' whiteSpace={'pre-line'}>
                 				{textbook?.psuDescription}
               				</Typography>
-              				<Typography variant='h5' mt={3}>
+              				<Typography variant='h5' mt={3} whiteSpace={'pre-line'}>
                                 External Textbook: {textbook?.extTextbook}
               				</Typography>
               				<Typography variant='h6' mt={3}>
                 				Description:
               				</Typography>
-              				<Typography variant='body1'>
+              				<Typography variant='body1' whiteSpace={'pre-line'}>
                 				{textbook?.extDescription}
               				</Typography>
               				<Typography variant='h6' mt={3}>
                 				Summary:
               				</Typography>
-              				<Typography variant='body1'>
+              				<Typography variant='body1' whiteSpace={'pre-line'}>
                 				{textbook?.summary}
               				</Typography>
             			</Box>
@@ -266,7 +266,7 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
               				<Typography variant='h6' mt={3}>
                 				Summary:
               				</Typography>
-              				<Typography variant='body1'>
+              				<Typography variant='body1' whiteSpace={'pre-line'}>
                 				{gradingScheme?.summary}
               				</Typography>
             			</Box>
@@ -275,7 +275,7 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
                 <Typography variant='h2' mt={3}>
                     General Summary:
                 </Typography>
-                <Typography variant='body1'>
+                <Typography variant='body1' whiteSpace={'pre-line'}>
                     {summary}
                 </Typography>
       		</>
