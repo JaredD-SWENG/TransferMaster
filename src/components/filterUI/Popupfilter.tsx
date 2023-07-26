@@ -80,16 +80,16 @@ const Popupfilter = () => {
                
                 <Box display={'flex'} flexDirection={'column'} alignItems={'center'} gap={5}>
                     <Box display={'flex'} justifyContent={'flex-start'}  flex={1}>
-                       <Coursecategory/>
+                       {/* <Coursecategory onSelect={onSelect} /> */}
                     </Box>
                     <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
-                        <Reviewstatus />
+                        {/* <Reviewstatus onSelect={onSelect} /> */}
                     </Box>
                     <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
-                        <ControlledDatepicker/>
+                        {/* <ControlledDatepicker onSelect={onSelect} /> */}
                     </Box>
                     <Box display={'flex'} justifyContent={'flex-end'} alignItems={'center'} flex={1}>
-                       <Selectfilter/>
+                       {/* <Selectfilter onSelect={onSelect} /> */}
                     </Box>
                   </Box>
 </Grid> 

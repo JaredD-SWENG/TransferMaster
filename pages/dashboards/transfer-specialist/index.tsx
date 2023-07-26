@@ -12,6 +12,11 @@ import withRole from "../../../src/components/hocs/withRole";
 import { useRouter } from "next/router";
 import TCSFilter from "../../filterUI/TSCFilter";
 
+interface Filter {
+    value: string | null;
+    type: string;
+}
+
 // db collection schemas
 
 // Requests collection
@@ -170,10 +175,10 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
     console.log("Requests:", requests);
 
 
-    const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+    const [selectedFilter, setSelectedFilter] = useState<Filter | null>(null);
 
 
-    const handleSelect = (value: string | null) => {
+    const handleSelect = (value: Filter | null) => {
         setSelectedFilter(value);
     };
 

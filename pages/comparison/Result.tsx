@@ -27,17 +27,17 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusCo
     const [open, setOpen] = useState(false);
     const [message, setMessage] = useState('');
     const [openChat, setOpenChat] = useState(false);
-  const [chatHistory, setChatHistory] = useState<string[]>([]);
+    const [chatHistory, setChatHistory] = useState<string[]>([]);
 
     const handleOpenChat = () => {
         setOpenChat(true);
-      };
+    };
     
-      const handleCloseChat = () => {
+    const handleCloseChat = () => {
         setOpenChat(false);
-      };
+    };
 
-      const handleSendMessage = async (message: string) => {
+    const handleSendMessage = async (message: string) => {
         // Display the message in the chatbox
         addToChatHistory(` ${message}`);
     
@@ -45,11 +45,11 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusCo
         const response = await callChatbot(message);
         // Display the answer in the chatbox
         addToChatHistory(`${response}`);
-      };
+    };
     
-      const addToChatHistory = (msg: string) => {
+    const addToChatHistory = (msg: string) => {
         setChatHistory((prevHistory) => [...prevHistory, msg]);
-      };
+    };
     
     const DynamicBarChart = dynamic(() => import('./BarChart'), { ssr: false });
     // const Transition = React.forwardRef(function Transition(
@@ -136,6 +136,7 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusCo
                 <Typography mt={6}>
                     <DynamicBarChart syllabusComponents={syllabusComponents} />
                 </Typography>
+                
             {/*)}*/}
             <Box mt={3}>
                 <Grid item xs={12} lg={16}>
