@@ -10,7 +10,8 @@ import {
     DialogContentText,
     Typography, 
     Card,
-    Grid,} from "@mui/material";
+    Grid,
+    LinearProgress,} from "@mui/material";
 import ParentCard from "../../src/components/shared/ParentCard";
 import PageContainer from "../../src/components/container/PageContainer";
 import CustomFormLabel from "../../src/components/forms/theme-elements/CustomFormLabel";
@@ -34,6 +35,18 @@ import {
 } from '@mui/material';
 import { useSelector, AppState } from '../../src/store/Store';
 import DemoUpload from "./DemoUpload";
+import { styled } from '@mui/material/styles';
+
+const CustomLinearProgress = styled(LinearProgress)(({ theme }) => ({
+    height: 10, // Adjust the height to make the loading bar thicker
+    borderRadius: 5, // Add some border radius for a rounded appearance
+    backgroundColor: theme.palette.grey[300], // Change the background color
+    '& .MuiLinearProgress-bar': {
+      borderRadius: 5, // Add border radius for the progress bar
+      backgroundColor: theme.palette.primary.main, // Change the progress bar color
+    },
+  }));
+  
 
 type Props = {
   title: string;
@@ -215,6 +228,8 @@ const DemoCompare: React.FC<SyllabusProps> = ({ course, credits, textbook, learn
     const [psuFullText, setPsuFullText] = useState('');
     const [userID, setUserID] = useState('');
 
+    const [loadingProgress, setLoadingProgress] = useState(0);
+
     //const [learningObjectivePercentages, setLearningObjectivePercentages] = useState<number[] | null>(null);
 
     const handleSliderChange = (index: number) => (event: any, newValue: number | number[]) => {
@@ -303,6 +318,20 @@ const DemoCompare: React.FC<SyllabusProps> = ({ course, credits, textbook, learn
         }
         setIsLoading(false);
     }
+
+    useEffect(() => {
+        if (isLoading) {
+          const simulateProgress = async () => {
+            for (let i = 1; i <= 100; i += 1) {
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+              setLoadingProgress(i);
+            }
+            setLoadingProgress(100);
+          };
+          simulateProgress();
+        }
+      }, [isLoading]);
+
 
     const handleCompare = () => {
         const sum = sliderValues.reduce((a, b) => a + b, 0);
@@ -531,7 +560,11 @@ const DemoCompare: React.FC<SyllabusProps> = ({ course, credits, textbook, learn
                             Compare
                         </Button>
                     )}
-                    {isLoading && <Card>Loading...</Card>}
+                    {isLoading && (
+      <Box sx={{ width: "100%", mt: 2 }}>
+        <CustomLinearProgress variant="determinate" value={loadingProgress} />
+      </Box>
+    )}
                 </Grid>
                 <Grid item xs={12} display="flex" justifyContent="center" alignItems="center">
                     {displayText && <Card>{displayText}</Card>}

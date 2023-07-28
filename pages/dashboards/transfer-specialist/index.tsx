@@ -21,6 +21,7 @@ interface RequestType {
   ExternalSyllabus: DocumentReference;
   Status: string;
   Date: string;
+  Reviewer: DocumentReference;
 }
 
 interface RequestDisplayType {
@@ -29,11 +30,12 @@ interface RequestDisplayType {
   ExternalSyllabus: string; // name of syllabus should be displayed as a string
   Status: string;
   Date: string;
+  Reviewer: string;
 }
 
 // Users collection - only reviewers
 interface FacultyType {
-  id: number;
+  id: string;
   name: string;
   department: string;
   syllabus: string[];
@@ -43,6 +45,7 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
   const [requests, setRequests] = useState<RequestDisplayType[]>([]);
   const [selectedFaculty, setSelectedFaculty] = useState<{ [key: string]: string | '' }>({});
   const [faculty, setFaculty] = useState<FacultyType[]>([]);
+  const [assignedTo, setAssignedTo] = useState<string>('');
   const router = useRouter();
 
   //view more details about the request such as comments
@@ -77,16 +80,24 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
           // Fetch the Requester document
           const requesterSnapshot = await getDoc(requestData.Requester);
           const requesterData = requesterSnapshot.data()?.Name;
+        
+           // Fetch the Requester document
+           const reviewerSnapshot = await getDoc(requestData.Reviewer);
+           const reviewerData = reviewerSnapshot.data()?.Name;
+           setAssignedTo(reviewerData);
+         
     
           fetchedRequests.push({
             id: doc.id,
             Requester: requesterData,
             ExternalSyllabus: syllabusData,
             Status: requestData.Status,
+            Reviewer: reviewerData,
             Date: date,
           });
     
           setRequests(fetchedRequests);
+         
         });
       });
     
@@ -143,6 +154,7 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
       const userData = doc.data();
       if (userData.Name === reviewerName) {
         reviewerDocId = doc.id;
+        console.log(reviewerDocId);
         return;
       }
     });
@@ -151,25 +163,18 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
       // Update the "Reviewer" field of the selected request in the database with the reviewer document ID
       const requestRef = doc(db, "Requests", requestId);
       try {
-        await updateDoc(requestRef, { Reviewer: reviewerDocId });
+        await updateDoc(requestRef, { Reviewer: reviewerDocId ? doc(db, "Users", reviewerDocId) : null });
         console.log("Update successful");
+        console.log('rrr' , requestRef);
       } catch (error) {
         console.error("Update failed:", error);
       }
     }
   }
 };
-
-
-  // function handleClick() {
-  //   return (
-  //       router.push('../../comparison/')
-  //   );
-  // };
-  
   
 
-  console.log("Requests:", requests);
+  console.log("ASSIGNED TO:", assignedTo);
 
   return (
     <DashboardCard
@@ -207,6 +212,9 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
               <TableCell>
                 <Typography variant="subtitle2" fontWeight={600}>Date</Typography>
               </TableCell>
+              <TableCell>
+                <Typography variant="subtitle2" fontWeight={600}>Assign to</Typography>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -228,18 +236,11 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
                   </Typography>
                 </TableCell>
                 <TableCell>
-                  <CustomSelect
-                    value={selectedFaculty[request.id] || ''}
-                    onChange={handleAssign(request.id)}
-                    size="small"
-                  >
-                    {faculty.map((facultyMember) => (
-                      <MenuItem key={facultyMember.id} value={facultyMember.name}>
-                        {facultyMember.name}
-                      </MenuItem>
-                    ))}
-                  </CustomSelect>
+                  <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
+                    {request.Reviewer}
+                  </Typography>
                 </TableCell>
+               
                 <TableCell>
                 <Chip
                     sx={{
@@ -275,10 +276,26 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
                   </Typography>
                 </TableCell>
                 <TableCell>
+                  <CustomSelect
+                    value={selectedFaculty[request.id] || assignedTo}
+                    onChange={handleAssign(request.id)}
+                    size="small"
+                    displayEmpty  // This allows the placeholder to be displayed when no value is selected
+                    >
+                    {faculty.map((facultyMember) => (
+                      <MenuItem key={facultyMember.id} value={facultyMember.name}>
+                        {facultyMember.name}
+                      </MenuItem>
+                    ))}
+                  </CustomSelect>
+                </TableCell>
+               
+                <TableCell>
                     <Button variant="outlined" onClick={() => viewMoreDetails(request.id)} >
                       View Details
                     </Button>
                 </TableCell>
+                
               </TableRow>
             ))}
           </TableBody>

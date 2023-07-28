@@ -89,6 +89,9 @@ const PsuUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
   const [courseCategory, setCourseCategory] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [downloadUrl, setDownloadUrl ] = useState<string>('');
+  const [isSelectable, setIsSectable] = useState(true);
+  const [OCRContent, setOCRContent] = useState<string>('');
+  const [fileBytes, setFileBytes] = useState<ArrayBuffer>();
   //MyUploads code--------------------------------------------------
   const [myUploads, setMyUploads] = useState<any[]>([]);
   const [courseNames, setCourseNames] = useState<string[]>([]);
@@ -108,10 +111,32 @@ const PsuUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
    
   };
 
+  async function callOCRCheck(fileURL:string) {
+    console.log("file url: " + fileURL);
+    try {
+        const response = await axios.post('https://o6utjsi2fp4nhvr4mojyypwgu40aspyt.lambda-url.us-east-1.on.aws/', {
+            PdfUrl: fileURL
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        console.log(response)
+        const data = response.data
+        return data;
+  
+       
+      
+    } catch (error) {
+      console.error(`Error calling lambda function: ${error}`);
+      return "Error calling";
+    }
+  }
+
   // OS Parser API call
   async function parse_doc(data: any) {
     
-    const api_token = '9c263dc72cfcf24432a1ae9acdab709c55ba14f4';
+    const api_token = process.env.NEXT_PUBLIC_OS_PARSER_API_TOKEN;;
     const response = await axios.post(
       'https://parser-api.opensyllabus.org/v1/',
       data,
@@ -132,12 +157,38 @@ const PsuUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
     if (file) {
       try {
         setLoading(true);
+          //Create a reference to firebase storage and store the uploaded file in /uploads 
+        const storageRef = ref(storage, 'uploads/' + file.name);
+        await uploadBytes(storageRef, file);
+        const downloadUrl = await getDownloadURL(ref(storage, storageRef.fullPath));
+        setDownloadUrl(downloadUrl);
 
-        // Read the file as an ArrayBuffer
-        const fileBytes = await file.arrayBuffer();
+        //call to OCR:  callOCRCheck(downloadUrl)
+        const ocrCheck = await callOCRCheck(downloadUrl);
 
-        // Convert the ArrayBuffer to a Uint8Array for sending as binary data in the API request
-        const fileData = new Uint8Array(fileBytes);
+        let fileData = new Uint8Array();
+        let bytes = new ArrayBuffer(0);
+        //IF NOT SELECTABLE
+        if (!ocrCheck.isSelectable){
+          setIsSectable(ocrCheck.isSelectable);
+          setOCRContent(ocrCheck.fileContent);
+          let encoder = new TextEncoder();
+          fileData = encoder.encode(ocrCheck.fileContent);
+          console.log("fileData",  fileData);
+            
+        }else{
+          const fileBytes = await file.arrayBuffer();
+          bytes = fileBytes;
+          //setFileBytes(fileBytes);
+    
+          console.log("filebytes", bytes);
+          // Convert the ArrayBuffer to a Uint8Array for sending as binary data in the API request
+          fileData = new Uint8Array(bytes);
+    
+          console.log("filedata", fileData);
+         }
+
+       
 
         // Call the parse_doc API function with the fileData
         const apiResponse = await parse_doc(fileData);
@@ -188,9 +239,9 @@ const PsuUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
         setLearningObjectivesValue(learningObjectivesValue);
       
 
-        
+        if(ocrCheck.isSelectable){
         // Load the PDF document from the bytes
-       const loadingTask = getDocument({ data: fileBytes });
+       const loadingTask = getDocument({ data: bytes });
        console.log('loadingTask:', loadingTask);
 
        loadingTask.promise
@@ -198,8 +249,9 @@ const PsuUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
          console.log('Promise resolved. PDF:', pdf);
          let fullText = '';
 
-         // Loop through each page and extract text
-         for (let i = 1; i <= pdf.numPages; i++) {
+         // Loop through each page and extract text (pdf.numPages)
+       
+         for (let i = 1; i <= Math.min(5, pdf.numPages); i++) {
            const page = await pdf.getPage(i);
 
            // Extract the text content
@@ -234,12 +286,6 @@ const PsuUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
         //  //file upload to firebase
        
          try{
-
-           //Create a reference to firebase storage and store the uploaded file in /uploads 
-            const storageRef = ref(storage, 'uploads/' + file.name);
-            await uploadBytes(storageRef, file);
-            const downloadUrl = await getDownloadURL(ref(storage, storageRef.fullPath));
-            setDownloadUrl(downloadUrl);
             //Store the uploaded syllabus's path in /SyllabiURL
             const docRef = await addDoc(collection(db, 'SyllabiURL'), { fileUrl: storageRef.fullPath });
             setDocumentId(docRef.id);
@@ -312,6 +358,108 @@ const PsuUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
        .catch((error: any) => {
         console.error('Error loading PDF:', error);
       });
+    }else{
+      const fullText = ocrCheck.fileContent;
+
+      const user = auth.currentUser;
+
+        if (user) {
+          const email = user.email;
+          const q = query(collection(db, "Users"), where("Email", "==", email));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+            const userData = userDoc.data();
+           
+            setCourseCategory(userData.Department);
+        }
+        
+        }
+
+        //console.log(courseCategory)
+        
+
+        
+        //  //file upload to firebase
+       
+         try{
+
+          
+           
+            //Store the uploaded syllabus's path in /SyllabiURL
+            const docRef = await addDoc(collection(db, 'SyllabiURL'), { fileUrl: storageRef.fullPath });
+            setDocumentId(docRef.id);
+            console.log('File uploaded successfully!');
+
+            //console.log("CC", courseCategory)
+
+            //Store the extracted sections and user-enetered fields in /Syllabi
+            const syllabiDoc = {
+              InstitutionName: institutionValue,
+              CourseName: courseNameValue,
+              Credits: Number(creditsValue),
+              CourseCategory: courseCategory,
+              TermType: "Semester",
+              SyllabusURL: doc(db, 'SyllabiURL', docRef.id),
+              Textbook: textbookValue,
+              Objectives: learningObjectivesValue,
+              IsSelectable: ocrCheck.isSelectable,
+              OCRContent: ocrCheck.fileContent,
+
+            }
+
+            const syllabiRef = await addDoc(collection(db, 'Syllabi'), syllabiDoc);
+            console.log('Syllabus data stored successfully!');
+
+            console.log("UserID", userID);
+            //store the PSU syllabus under the User's myUploads
+            let userDocRef = doc(db, 'Users', userID as string);
+
+            // Get the user document from Firestore
+            const userDocSnapshot = await getDoc(userDocRef);
+
+            // Check if the MyUploads field exists in the user document
+            if (userDocSnapshot.exists() && userDocSnapshot.data().MyUploads) {
+              // If the MyUploads field already exists, add the syllabus document ID to the array
+              const myUploadsArray = userDocSnapshot.data().MyUploads;
+              myUploadsArray.push(syllabiRef.id);
+              console.log("Pushed syllabus ref to MyUploads[]")
+
+              // Update the user document with the updated MyUploads array
+              await updateDoc(userDocRef, { MyUploads: myUploadsArray });
+            } else {
+              // If the MyUploads field doesn't exist, create it with the syllabus document ID as the first element of the array
+              await setDoc(userDocRef, { MyUploads: [syllabiRef.id] }, { merge: true });
+              console.log("Created MyUploads[] and added the syllabus ref to it")
+            }
+
+            //here
+           
+            console.log('Request updated successfully!');
+
+            console.log("INSIDE POPUP: " + downloadUrl)
+            console.log("IF NOT SELECTABLE ", fullText)
+            // Create the extracted data object;
+            
+            const extractedData: SyllabusProps = {
+              course: courseNameValue,
+              credits: parseFloat(creditsValue),
+              textbook: textbookValue, // Add the extracted textbook here
+              learningObjectives: learningObjectivesValue, // Add the extracted learning objectives here
+              fullText: fullText,
+              downloadUrl: downloadUrl,
+              };
+
+              // Call the onExtractedData callback function with the extracted data
+              onExtractedData(extractedData);
+
+
+          } catch (error) {
+            console.error('Failed to upload file:', error);
+          }
+
+    }
         handlePsuClose();  // Close the popup here
         
       } catch (error) {
@@ -475,6 +623,8 @@ const handleOkClick = async () => {
         const objectivesValue = data.Objectives;
         
         const syllabusURLRef = data.SyllabusURL;
+
+        const OCRContent = data.OCRContent;
         
         const syllabusURLDocSnapshot = await getDoc(syllabusURLRef);
         if(syllabusURLDocSnapshot.exists()){
@@ -484,9 +634,11 @@ const handleOkClick = async () => {
 
           // Get the file URL from Firebase Storage
           const fileRef = ref(storage, storageFileURL);
-          const fileBytes = await getBytes(fileRef);
-          const downloadUrl = await getDownloadURL(ref(storage, storageFileURL));
+        
+          const downloadUrl = await getDownloadURL(fileRef);
           
+          if(data.isSelectable){
+          const fileBytes = await getBytes(fileRef);
           // Load the PDF document from the bytes
           const loadingTask = getDocument({ data: fileBytes });
           console.log('loadingTask:', loadingTask);
@@ -497,7 +649,7 @@ const handleOkClick = async () => {
               let fullText = '';
     
               // Loop through each page and extract text
-              for (let i = 1; i <= pdf.numPages; i++) {
+              for (let i = 1; i <= Math.min(5, pdf.numPages); i++) {
                 const page = await pdf.getPage(i);
     
                 // Extract the text content
@@ -527,6 +679,24 @@ const handleOkClick = async () => {
             .catch((error: any) => {
               console.error('Error loading PDF:', error);
             });
+          }else{
+            console.log("IF NOT SELECTABLE ", OCRContent);
+            //YOOOO LISTEN TO ME 
+             // Create the extracted data object
+             const extractedData: SyllabusProps = {
+              course: courseNameValue,
+              credits: parseFloat(creditsValue),
+              textbook: textbookValue, // You would need to extract this from the text you've just read
+              learningObjectives: objectivesValue, // And this as well
+              fullText: OCRContent,
+              downloadUrl: downloadUrl,
+              
+            };
+  
+            // Call the onExtractedData callback function with the extracted data
+            onExtractedData(extractedData);
+          }
+
         }
     
         handlePsuClose();  // Close the popup here

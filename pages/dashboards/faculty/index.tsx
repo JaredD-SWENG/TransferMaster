@@ -65,8 +65,10 @@ const FacultyDashboard: CustomNextPage = () => {
                   }
               }
               const requestsCollection = collection(db, 'Requests');
+              const findMe = "/Users/"+userId;
+              console.log("findMe", findMe)
               const querySnapshot = await getDocs(
-                  query(requestsCollection, where('Reviewer', '==', userId))
+                  query(requestsCollection, where('Reviewer', '==', userId ? doc(db, 'Users', userId) : null ))
               );
   
               const fetchedRequests: RequestDisplayType[] = [];

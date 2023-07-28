@@ -22,12 +22,32 @@ import Head from 'next/head';
 import { getDocument, GlobalWorkerOptions} from 'pdfjs-dist';
 GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.7.107/pdf.worker.min.js';
 
+async function callOCRCheck(fileURL:string) {
+  console.log("file url: " + fileURL);
+  try {
+      const response = await axios.post('https://o6utjsi2fp4nhvr4mojyypwgu40aspyt.lambda-url.us-east-1.on.aws/', {
+          PdfUrl: fileURL
+      }, {
+          headers: {
+              'Content-Type': 'application/json',
+          },
+      });
+      console.log(response)
+      const data = response.data
+      return data;
 
+     
+    
+  } catch (error) {
+    console.error(`Error calling lambda function: ${error}`);
+    return "Error calling";
+  }
+}
 const StudentUploadPage: CustomNextPage = () => {
 
   //OS Parser API call 
   async function parse_doc(data: any) {
-    const api_token = '9c263dc72cfcf24432a1ae9acdab709c55ba14f4'; 
+    const api_token = process.env.NEXT_PUBLIC_OS_PARSER_API_TOKEN; 
     const response = await axios.post('https://parser-api.opensyllabus.org/v1/', data, {
       headers: {
         'Authorization': `Token ${api_token}`,
@@ -46,8 +66,14 @@ const StudentUploadPage: CustomNextPage = () => {
   const [gradeValue, setGradeValue] = useState<string>('');
   const [textbookValue, setTextBookValue] = useState<string>('');
   const [learningObjectivesValue, setLearningObjectivesValue] = useState<string[]>([]);
+  const [isSelectable, setIsSectable] = useState(true);
+  const [OCRContent, setOCRContent] = useState<string>('');
   const [isFormComplete, setIsFormComplete] = useState(false);
+  const [storageRefPath, setStorageRefPath] = useState<string>('');
   const [userID, setUserID] = useState<string>('');
+  const [fileData, setFileData] = useState<Uint8Array>();
+  const [fileBytes, setFileBytes] = useState<ArrayBuffer>();
+
   const router = useRouter();
 
   const handleTermChange = (value: string) => {
@@ -58,17 +84,43 @@ const StudentUploadPage: CustomNextPage = () => {
   const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
     setSelectedFile(file);
-  
+    
     if (file) {
       try {
+
+        //Create a reference to firebaes storage and store the uploaded file in /uploads 
+        const storageRef = ref(storage, 'uploads/' + file.name);
+        await uploadBytes(storageRef, file);
+        setStorageRefPath(storageRef.fullPath);
+
+        const downloadUrl = await getDownloadURL(storageRef); 
+        
+        //call to OCR:  callOCRCheck(downloadUrl)
+       const ocrCheck = await callOCRCheck(downloadUrl);
+
+       let fileData = new Uint8Array();
+       if (!ocrCheck.isSelectable){
+         setIsSectable(ocrCheck.isSelectable);
+         setOCRContent(ocrCheck.fileContent);
+         let encoder = new TextEncoder();
+         fileData = encoder.encode(ocrCheck.fileContent);
+         console.log("fileData",  fileData);
+         
+         //convert to bytes
+       }
+       else{
         // Read the file as an ArrayBuffer
         const fileBytes = await file.arrayBuffer();
+        setFileBytes(fileBytes);
   
         console.log("filebytes", fileBytes);
         // Convert the ArrayBuffer to a Uint8Array for sending as binary data in the API request
-        const fileData = new Uint8Array(fileBytes);
+        fileData = new Uint8Array(fileBytes);
   
         console.log("filedata", fileData);
+        
+       }
+
         
         // Call the parse_doc API function with the fileData
         const apiResponse = await parse_doc(fileData);
@@ -117,33 +169,39 @@ const StudentUploadPage: CustomNextPage = () => {
         setCreditsValue(creditsValue);
         setTextBookValue(textbookValue);
         setLearningObjectivesValue(learningObjectivesValue);
-         // Load the PDF document from the bytes
-      const loadingTask = getDocument({ data: fileBytes });
-      console.log('loadingTask:', loadingTask);
-
-      loadingTask.promise
-        .then(async (pdf: { numPages: number; getPage: (arg0: number) => any }) => {
-          console.log('Promise resolved. PDF:', pdf);
-          let fullText = '';
-
-          // Loop through each page and extract text
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-
-            // Extract the text content
-            const content = await page.getTextContent();
-
-            // Combine the text items into a single string
-            const text = content.items.map((item: { str: any }) => item.str).join(' ');
-
-            fullText += text + '\n';
-          }
-
-          console.log('PDF Text:', fullText);
-        })
-        .catch((error: any) => {
-          console.error('Error loading PDF:', error);
-        });
+       // Only proceed with the following code if ocrCheck.isSelectable is true
+        if (ocrCheck.isSelectable) {
+          console.log("filebytes inside the if(ocrCheck.isSelectable)", fileBytes);
+          // Load the PDF document from the bytes
+          const loadingTask = getDocument({ data: fileBytes });
+          console.log('loadingTask:', loadingTask);
+  
+          loadingTask.promise
+            .then(async (pdf: { numPages: number; getPage: (arg0: number) => any }) => {
+              console.log('Promise resolved. PDF:', pdf);
+              let fullText = '';
+  
+              // Loop through each page and extract text
+              for (let i = 1; i <= Math.min(5, pdf.numPages); i++) {
+                const page = await pdf.getPage(i);
+  
+                // Extract the text content
+                const content = await page.getTextContent();
+  
+                // Combine the text items into a single string
+                const text = content.items.map((item: { str: any }) => item.str).join(' ');
+  
+                fullText += text + '\n';
+              }
+  
+              
+  
+             
+            })
+            .catch((error: any) => {
+              console.error('Error loading PDF:', error);
+            });
+        }
   
       } catch (error) {
         console.error('Failed to parse document:', error);
@@ -188,16 +246,17 @@ const handleSubmit = async () => {
   }
   if (selectedFile) {
     try {
-      //Create a reference to firebaes storage and store the uploaded file in /uploads 
-      const storageRef = ref(storage, 'uploads/' + selectedFile.name);
-      await uploadBytes(storageRef, selectedFile);
+      // //Create a reference to firebaes storage and store the uploaded file in /uploads 
+      // const storageRef = ref(storage, 'uploads/' + selectedFile.name);
+      // await uploadBytes(storageRef, selectedFile);
 
       //Store the uploaded syllabus's path in /SyllabiURL
-      const docRef = await addDoc(collection(db, 'SyllabiURL'), { fileUrl: storageRef.fullPath });
+      const docRef = await addDoc(collection(db, 'SyllabiURL'), { fileUrl: storageRefPath });
       setDocumentId(docRef.id);
       console.log('File uploaded successfully!');
 
       //Store the extracted sections and user-enetered fields in /Syllabi
+      
       const syllabiDoc = {
         InstitutionName: institutionValue,
         CourseName: courseNameValue,
@@ -207,6 +266,8 @@ const handleSubmit = async () => {
         SyllabusURL: doc(db, 'SyllabiURL', docRef.id),
         Textbook: textbookValue,
         Objectives: learningObjectivesValue,
+        IsSelectable: isSelectable,
+        OCRContent: OCRContent,
       }
 
       const syllabiRef = await addDoc(collection(db, 'Syllabi'), syllabiDoc);
@@ -299,7 +360,7 @@ useEffect(() => {
               let fullText = "";
 
               // Loop through each page and extract text
-              for(let i = 1; i <= pdf.numPages; i++) {
+              for(let i = 1; i <= Math.min(5, pdf.numPages); i++) {
                   const page = await pdf.getPage(i);
 
                   // Extract the text content
