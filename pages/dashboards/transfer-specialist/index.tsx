@@ -10,182 +10,197 @@ import CustomNextPage from "../../../types/custom";
 import FullLayout from "../../../src/layouts/full/FullLayout";
 import withRole from "../../../src/components/hocs/withRole";
 import { useRouter } from "next/router";
-import FilterUITCS from "../../filterUI/FilterUITCS";
+import TCSFilter from "../../filterUI/TSCFilter";
+
+interface Filter {
+    value: string | null;
+    type: string;
+}
 
 // db collection schemas
 
 // Requests collection
 interface RequestType {
-  id: string;
-  Requester: DocumentReference;
-  ExternalSyllabus: DocumentReference;
-  Status: string;
-  Date: string;
-  Reviewer: DocumentReference;
+    id: string;
+    Requester: DocumentReference;
+    ExternalSyllabus: DocumentReference;
+    Status: string;
+    Date: string;
+    Reviewer: DocumentReference;
 }
 
 interface RequestDisplayType {
-  id: string;
-  Requester: string;
-  ExternalSyllabus: string; // name of syllabus should be displayed as a string
-  Status: string;
-  Date: string;
-  Reviewer: string;
+    id: string;
+    Requester: string;
+    Reviewer: string;
+    ExternalSyllabus: string; // name of syllabus should be displayed as a string
+    Status: string;
+    Date: string;
 }
 
 // Users collection - only reviewers
 interface FacultyType {
-  id: string;
-  name: string;
-  department: string;
-  syllabus: string[];
+    id: string;
+    name: string;
+    department: string;
+    syllabus: string[];
 }
 
 const TransferSpecialistDashboard: CustomNextPage = () => {
-  const [requests, setRequests] = useState<RequestDisplayType[]>([]);
-  const [selectedFaculty, setSelectedFaculty] = useState<{ [key: string]: string | '' }>({});
-  const [faculty, setFaculty] = useState<FacultyType[]>([]);
-  const [assignedTo, setAssignedTo] = useState<string>('');
-  const router = useRouter();
+    const [requests, setRequests] = useState<RequestDisplayType[]>([]);
+    const [selectedFaculty, setSelectedFaculty] = useState<{ [key: string]: string | '' }>({});
+    const [faculty, setFaculty] = useState<FacultyType[]>([]);
+    const [assignedTo, setAssignedTo] = useState<string>('');
+    const router = useRouter();
 
-  //view more details about the request such as comments
-  const viewMoreDetails = (requestID: string) => {
-    router.push({
-      pathname: "/dashboards/transfer-specialist/RequestDetails",
-      query: { requestID },
-    });
-  };
-  
-
-  useEffect(() => {
-
-    // Pull requests to be displayed from /Requests collection
-    const fetchRequests = async () => {
-      const requestsCollection = collection(db, "Requests");
-    
-      const unsubscribe = onSnapshot(requestsCollection, (querySnapshot) => {
-        const fetchedRequests: RequestDisplayType[] = [];
-    
-        querySnapshot.forEach(async (doc) => {
-          const requestData = doc.data() as RequestType;
-    
-          // Convert the 'Date' object to a readable format
-          const timestamp = requestData.Date as unknown as Timestamp;
-          const date = timestamp.toDate().toLocaleDateString();
-    
-          // Fetch the ExternalSyllabus document
-          const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
-          const syllabusData = syllabusSnapshot.data()?.CourseName;
-    
-          // Fetch the Requester document
-          const requesterSnapshot = await getDoc(requestData.Requester);
-          const requesterData = requesterSnapshot.data()?.Name;
-        
-           // Fetch the Requester document
-           const reviewerSnapshot = await getDoc(requestData.Reviewer);
-           const reviewerData = reviewerSnapshot.data()?.Name;
-           setAssignedTo(reviewerData);
-         
-    
-          fetchedRequests.push({
-            id: doc.id,
-            Requester: requesterData,
-            ExternalSyllabus: syllabusData,
-            Status: requestData.Status,
-            Reviewer: reviewerData,
-            Date: date,
-          });
-    
-          setRequests(fetchedRequests);
-         
+    //view more details about the request such as comments
+    const viewMoreDetails = (requestID: string) => {
+        router.push({
+        pathname: "/dashboards/transfer-specialist/RequestDetails",
+        query: { requestID },
         });
-      });
-    
-      // Clean up the listener when the component unmounts
-      return unsubscribe;
     };
+  
+
+    useEffect(() => {
+
+        // Pull requests to be displayed from /Requests collection
+        const fetchRequests = async () => {
+            const requestsCollection = collection(db, "Requests");
+        
+            const unsubscribe = onSnapshot(requestsCollection, (querySnapshot) => {
+                const fetchedRequests: RequestDisplayType[] = [];
+        
+                querySnapshot.forEach(async (doc) => {
+                    const requestData = doc.data() as RequestType;
+        
+                    // Convert the 'Date' object to a readable format
+                    const timestamp = requestData.Date as unknown as Timestamp;
+                    const date = timestamp.toDate().toLocaleDateString();
+        
+                    // Fetch the ExternalSyllabus document
+                    const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
+                    const syllabusData = syllabusSnapshot.data()?.CourseName;
+        
+                    // Fetch the Requester document
+                    const requesterSnapshot = await getDoc(requestData.Requester);
+                    const requesterData = requesterSnapshot.data()?.Name;
+
+                    const reviewerSnapshot = await getDoc(requestData.Reviewer);
+                    const reviewerData = reviewerSnapshot.data()?.Name;
+                    setAssignedTo(reviewerData);
+        
+                    fetchedRequests.push({
+                        id: doc.id,
+                        Requester: requesterData,
+                        ExternalSyllabus: syllabusData,
+                        Reviewer: reviewerData,
+                        Status: requestData.Status,
+                        Date: date,
+                    });
+        
+                    setRequests(fetchedRequests);
+                });
+            });
+        
+            // Clean up the listener when the component unmounts
+            return unsubscribe;
+        };
     
 
-    // Pull reviewers to be displayed from /Users collection
-    const fetchFaculty = async () => {
-      const usersCollection = collection(db, "Users");
-      const querySnapshot = await getDocs(usersCollection);
-      const facultyData: FacultyType[] = [];
+        // Pull reviewers to be displayed from /Users collection
+        const fetchFaculty = async () => {
+            const usersCollection = collection(db, "Users");
+            const querySnapshot = await getDocs(usersCollection);
+            const facultyData: FacultyType[] = [];
 
-      querySnapshot.forEach((doc) => {
-        const userData = doc.data();
-        if (userData.Role === "Faculty") {
-          facultyData.push({
-            id: userData.id,
-            name: userData.Name,
-            department: userData.Department,
-            syllabus: [],
-          });
+            querySnapshot.forEach((doc) => {
+                const userData = doc.data();
+                if (userData.Role === "Faculty") {
+                    facultyData.push({
+                        id: userData.id,
+                        name: userData.Name,
+                        department: userData.Department,
+                        syllabus: [],
+                    });
+                }
+            });
+
+            setFaculty(facultyData);
+        };
+
+        fetchRequests();
+        fetchFaculty();
+    }, []);
+
+
+    // handle the assignment feature
+    const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ value: unknown }>) => {
+  
+        // Fetch the document ID of the selected reviewer from the Users collection
+        const reviewerName = event.target.value as string;
+        const usersCollection = collection(db, "Users");
+        const querySnapshot = await getDocs(query(usersCollection, where("Name", "==", reviewerName)));
+
+        setSelectedFaculty({
+            ...selectedFaculty,
+            [requestId]: reviewerName,
+        });
+
+        if (!querySnapshot.empty) {
+            let reviewerDocId = null;
+
+            // Find the matching reviewer and retrieve their document ID
+            querySnapshot.forEach((doc) => {
+                const userData = doc.data();
+                if (userData.Name === reviewerName) {
+                    reviewerDocId = doc.id;
+                    return;
+                }
+            });
+
+            if (reviewerDocId) {
+                // Update the "Reviewer" field of the selected request in the database with the reviewer document ID
+                const requestRef = doc(db, "Requests", requestId);
+                try {
+                    await updateDoc(requestRef, { Reviewer: reviewerDocId ? doc(db, "Users", reviewerDocId) : null });
+                    console.log("Update successful");
+                } catch (error) {
+                    console.error("Update failed:", error);
+                }
+            }
         }
-      });
-
-      setFaculty(facultyData);
     };
 
-    fetchRequests();
-    fetchFaculty();
-  }, []);
 
-
-// handle the assignment feature
-const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ value: unknown }>) => {
+    // function handleClick() {
+    //   return (
+    //       router.push('../../comparison/')
+    //   );
+    // };
   
 
-  // Fetch the document ID of the selected reviewer from the Users collection
-  const reviewerName = event.target.value as string;
-  const usersCollection = collection(db, "Users");
-  const querySnapshot = await getDocs(query(usersCollection, where("Name", "==", reviewerName)));
+    console.log("Requests:", requests);
 
-  setSelectedFaculty({
-    ...selectedFaculty,
-    [requestId]: reviewerName,
-  });
 
-  if (!querySnapshot.empty) {
-    let reviewerDocId = null;
+    const [selectedFilter, setSelectedFilter] = useState<Filter | null>(null);
 
-    // Find the matching reviewer and retrieve their document ID
-    querySnapshot.forEach((doc) => {
-      const userData = doc.data();
-      if (userData.Name === reviewerName) {
-        reviewerDocId = doc.id;
-        console.log(reviewerDocId);
-        return;
-      }
-    });
 
-    if (reviewerDocId) {
-      // Update the "Reviewer" field of the selected request in the database with the reviewer document ID
-      const requestRef = doc(db, "Requests", requestId);
-      try {
-        await updateDoc(requestRef, { Reviewer: reviewerDocId ? doc(db, "Users", reviewerDocId) : null });
-        console.log("Update successful");
-        console.log('rrr' , requestRef);
-      } catch (error) {
-        console.error("Update failed:", error);
-      }
-    }
-  }
-};
-  
+    const handleSelect = (value: Filter | null) => {
+        setSelectedFilter(value);
+    };
 
-  console.log("ASSIGNED TO:", assignedTo);
 
-  return (
-    <DashboardCard
-      title="Requests"
-      action={
-        <Grid >               
-          <FilterUITCS/> 
-        </Grid>
-      }
-    >
-      <TableContainer>
+    return (
+        <DashboardCard
+            title="Requests"
+            action={
+                <Grid>               
+                    <TCSFilter onSelect={handleSelect} /> 
+                </Grid>
+            }
+        >
+        <TableContainer>
         <Table
           aria-label="simple table"
           sx={{
@@ -301,12 +316,12 @@ const handleAssign = (requestId: string) => async (event: React.ChangeEvent<{ va
           </TableBody>
         </Table>
       </TableContainer>
-    </DashboardCard>
-  );
+        </DashboardCard>
+    );
 };
 
 TransferSpecialistDashboard.getLayout = function getLayout(page: ReactElement) {
-  return <FullLayout>{page}</FullLayout>;
+    return <FullLayout>{page}</FullLayout>;
 };
 
 export default withRole({ Component: TransferSpecialistDashboard, roles: ['Transfer Specialist'] });

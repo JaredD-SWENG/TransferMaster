@@ -17,11 +17,11 @@ import Scrollbar from '../custom-scroll/Scrollbar';
 import { IconBellRinging } from '@tabler/icons-react';
 import { Stack } from '@mui/system';
 import Link from 'next/link';
-import FilterUI from '../../../pages/filterUI/FilterUIfaculty';
-import ControlledDatepicker from './ControlledDatepicker';
-import Coursecategory from './Coursecategory';
-import Reviewstatus from './Reviewstatus';
-import Selectfilter from './Selectreviewer';
+import FilterUI from '../../../pages/filterUI/FacultyFilter';
+import ControlledDatepicker from './ControlledDatePicker';
+import Coursecategory from './CourseCategory';
+import Reviewstatus from './ReviewStatus';
+import Selectfilter from './SelectReviewer';
 
 const Popupfilter = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
@@ -80,16 +80,16 @@ const Popupfilter = () => {
                
                 <Box display={'flex'} flexDirection={'column'} alignItems={'center'} gap={5}>
                     <Box display={'flex'} justifyContent={'flex-start'}  flex={1}>
-                       <Coursecategory/>
+                       {/* <Coursecategory onSelect={onSelect} /> */}
                     </Box>
                     <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
-                        <Reviewstatus />
+                        {/* <Reviewstatus onSelect={onSelect} /> */}
                     </Box>
                     <Box display={'flex'} justifyContent={'center'} alignItems={'center'} flex={1}>
-                        <ControlledDatepicker/>
+                        {/* <ControlledDatepicker onSelect={onSelect} /> */}
                     </Box>
                     <Box display={'flex'} justifyContent={'flex-end'} alignItems={'center'} flex={1}>
-                       <Selectfilter/>
+                       {/* <Selectfilter onSelect={onSelect} /> */}
                     </Box>
                   </Box>
 </Grid> 

@@ -57,7 +57,7 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
             },
         },
         xaxis: {
-            categories: [['Learning Objectives'], ['Textbook'], ['Grading Scheme']],
+            categories: [['Topic Covered'], ['Textbook'], ['Grading Scheme']],
             axisBorder: {
                 show: false,
             },
@@ -138,46 +138,56 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
 		},
   	];
 
-	const { learningObjectives, textbook, gradingScheme } = syllabusComponents ?? {};
+    console.log(syllabusComponents)
+
+	//const { score, learningObjectives, textbook, gradingScheme, summary } = syllabusComponents ?? {};
+    const score = syllabusComponents?.score;
+    const learningObjectives = syllabusComponents?.learningObjectives;
+    const textbook = syllabusComponents?.textbook;
+    const gradingScheme = syllabusComponents?.gradingScheme;
+    const summary = syllabusComponents?.summary;
 
 	// iterate through the learning objectives scores and determine the right color for each score
 	let locolors: string[] = [];
-let locategories: string[] = [];
+    let locategories: string[] = [];
 
-if (learningObjectives && learningObjectives.scores !== undefined) {
-  for (let i = 0; i < learningObjectives.scores.length; i++) {
-    locategories[i] = 'LO ' + (i + 1);
-    if (learningObjectives.scores[i] < 35) locolors[i] = low;
-    else if (learningObjectives.scores[i] > 35 && learningObjectives.scores[i] < 80) locolors[i] = medium;
-    else locolors[i] = high;
-  }
-} else {
-  locolors = [];
-  locategories = [];
-}
+    if (learningObjectives && learningObjectives.scores !== undefined) {
+        for (let i = 0; i < learningObjectives.scores.length; i++) {
+            locategories[i] = 'LO ' + (i + 1);
+            if (learningObjectives.scores[i] < 35)
+                locolors[i] = low;
+            else if (learningObjectives.scores[i] > 35 && learningObjectives.scores[i] < 80)
+                locolors[i] = medium;
+            else
+                locolors[i] = high;
+        }
+    } else {
+        locolors = [];
+        locategories = [];
+    }
 
 	locolumnchart.xaxis.categories = locategories
 	locolumnchart.colors = locolors
 	if (learningObjectives && learningObjectives.scores) {
 		loseries[0].data = learningObjectives.scores;
-	  } else {
+    } else {
 		loseries[0].data = []; // or handle the case when scores is undefined
-	  }
+    }
 	  
 
-	  let maincolors: string[] = [];
-	  let maindata: number[] = [];
+    let maincolors: string[] = [];
+    let maindata: number[] = [];
 // ...
-if (learningObjectives !== undefined && learningObjectives.score !== undefined && textbook !== undefined && textbook.score !== undefined && gradingScheme !== undefined && gradingScheme.score !== undefined) {
-  maindata[0] = learningObjectives.score;
-  maindata[1] = textbook.score;
-	maindata[2] = gradingScheme.score;
-} else {
-  // Handle the case when the score is undefined or learningObjectives is not defined
-  maindata[0] = 0; // Assign a default value or handle the error case appropriately
-  maindata[1] = 0;
-	maindata[2] = 0;
-}
+    if (learningObjectives !== undefined && learningObjectives.score !== undefined && textbook !== undefined && textbook.score !== undefined && gradingScheme !== undefined && gradingScheme.score !== undefined) {
+        maindata[0] = learningObjectives.score;
+        maindata[1] = textbook.score;
+	    maindata[2] = gradingScheme.score;
+    } else {
+        // Handle the case when the score is undefined or learningObjectives is not defined
+        maindata[0] = 0; // Assign a default value or handle the error case appropriately
+        maindata[1] = 0;
+        maindata[2] = 0;
+    }
 
 	for(let i = 0; i < 3; i++) {
 		if(maindata[i] <= 35)
@@ -191,36 +201,61 @@ if (learningObjectives !== undefined && learningObjectives.score !== undefined &
 	maincolumnchart.colors = maincolors
 	mainseries[0].data = maindata
 
-	const gradingArray = Object.entries(gradingScheme?.gradingScheme || {});
-
   	return (
     	<Box>
       		<>
         		<Typography variant='h1'>
-          			Score: {syllabusComponents?.score || 'N/A'}
+          			Score: {score}
         		</Typography>
         		<Chart options={maincolumnchart} series={mainseries} type="bar" height="295px" width={"100%"}/>
         		{ 
           			mainClickedBarValue === 0 ? (
             			<>
               				<Typography variant='h3' mt={3}>
-                				Learning Objectives Information
+                				Topics Covered Information
               				</Typography>
               				<Chart options={locolumnchart} series={loseries} type="bar" height="295px" width={"100%"} />
+              				<Typography variant='h4' mt={3}>
+                				Learning Objectives Summary
+              				</Typography>
+              				<Typography variant='body1' mt={1} whiteSpace={'pre-line'}>
+                				{learningObjectives?.lo_summary}
+              				</Typography>
+              				<Typography variant='h4' mt={3}>
+                				Topics Covered Summary
+              				</Typography>
+              				<Typography variant='body1' mt={1} whiteSpace={'pre-line'}>
+                				{learningObjectives?.topics_summary}
+              				</Typography>
             			</>
 					) : mainClickedBarValue === 1 ? (
             			<Box m={3} p={3}>
               				<Typography variant='h3' mt={3}>
                 				Textbook Information
               				</Typography>
-              				<Typography variant='h5' mt={3}>
-                				Textbook: {textbook.psuTextbook} and {textbook.extTextbook}
+              				<Typography variant='h5' mt={3} whiteSpace={'pre-line'}>
+                				PSU Textbook: {textbook?.psuTextbook}
+              				</Typography>
+              				<Typography variant='h6' mt={3}>
+                				Description:
+              				</Typography>
+              				<Typography variant='body1' whiteSpace={'pre-line'}>
+                				{textbook?.psuDescription}
+              				</Typography>
+              				<Typography variant='h5' mt={3} whiteSpace={'pre-line'}>
+                                External Textbook: {textbook?.extTextbook}
+              				</Typography>
+              				<Typography variant='h6' mt={3}>
+                				Description:
+              				</Typography>
+              				<Typography variant='body1' whiteSpace={'pre-line'}>
+                				{textbook?.extDescription}
               				</Typography>
               				<Typography variant='h6' mt={3}>
                 				Summary:
               				</Typography>
-              				<Typography variant='body1'>
-                				{textbook.summary}
+              				<Typography variant='body1' whiteSpace={'pre-line'}>
+                				{textbook?.summary}
               				</Typography>
             			</Box>
           			) : mainClickedBarValue === 2 ? (
@@ -228,46 +263,21 @@ if (learningObjectives !== undefined && learningObjectives.score !== undefined &
               				<Typography variant='h3' mt={3}>
                 				Grading Scheme Information
               				</Typography>
-              				<Typography variant='h5' mt={3}>
-                				Grading Scheme:
-              				</Typography>
-              				<>
-                				{gradingArray.map(([grade, score], index) => (
-                  					<Typography variant='body1'>
-                    					{grade}: {score as number}
-                  					</Typography>
-                				))}
-              				</>
               				<Typography variant='h6' mt={3}>
                 				Summary:
               				</Typography>
-              				<Typography variant='body1'>
+              				<Typography variant='body1' whiteSpace={'pre-line'}>
                 				{gradingScheme?.summary}
               				</Typography>
             			</Box>
           			) : null
         		}
-        		{ 
-          			mainClickedBarValue === 0 && loClickedBarValue !== null ? (
-            			<Box>
-              				<Typography variant='h4' mt={3}>
-                				Score: {learningObjectives.scores[loClickedBarValue]}
-              				</Typography>
-              				<Typography variant='h4' mt={3}>
-                				Learning Objective:
-              				</Typography>
-              				<Typography variant='body1' mt={1}>
-                				{learningObjectives.objectives[loClickedBarValue]}
-              				</Typography>
-              				<Typography variant='h4' mt={3}>
-                				Summary
-              				</Typography>
-              				<Typography variant='body1' mt={1}>
-                				{learningObjectives.summary[loClickedBarValue]}
-              				</Typography>
-            			</Box>
-          			) : null
-        		}
+                <Typography variant='h2' mt={3}>
+                    General Summary:
+                </Typography>
+                <Typography variant='body1' whiteSpace={'pre-line'}>
+                    {summary}
+                </Typography>
       		</>
     	</Box>
   	);
