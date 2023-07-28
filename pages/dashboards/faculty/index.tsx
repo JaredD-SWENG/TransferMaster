@@ -114,8 +114,8 @@ const FacultyDashboard: CustomNextPage = () => {
       
         <>       
         <Grid >
-               
-          </Grid>
+                <FacultyFilter onSelect={handleSelect}/>
+            </Grid>
         <DashboardCard
             title="Requests"       
         >
