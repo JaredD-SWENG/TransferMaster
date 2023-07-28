@@ -110,6 +110,66 @@ const FacultyDashboard: CustomNextPage = () => {
   
           fetchRequests();
       }, []); // <-- Empty dependency array
+
+  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+
+    interface Filter {
+        value: string | null;
+        type: string;
+    }
+
+    const handleSelect = async (value: Filter | null) => {
+        console.log(value)
+        // Define a query against the 'collectionName' collection where 'field' equals the selected value
+        if (value !== null) {
+            console.log('inside')
+            if (value.type == 'category') {
+                const category = value.value;
+                console.log(category)
+                // Query 'Syllabi' collection to get the document IDs that have the desired 'category'
+                let syllabiSnapshot = await getDocs(query(collection(db, 'Syllabi'), where('CourseCategory', '==', category)));
+                let syllabiIds = syllabiSnapshot.docs.map(doc => doc.id);
+
+                // Query 'Requests' collection
+                let requestsSnapshot = await getDocs(collection(db, 'Requests'));
+
+                let relevantRequests = requestsSnapshot.docs.filter(doc => {
+                    // Assuming the 'syllabi' field in the 'Requests' document is a reference to a 'Syllabi' document
+                    let syllabiRef = doc.data().ExternalSyllabus;
+                    if (syllabiRef) {
+                        // Extract the ID from the reference (the path will be something like 'Syllabi/id')
+                        let syllabiId = syllabiRef.path.split('/')[1];
+                        return syllabiIds.includes(syllabiId);
+                    }
+                    return false;
+                });
+                // Handle the relevant requests
+                relevantRequests.forEach((doc) => {
+                    // doc.data() is never undefined for query doc snapshots
+                    console.log(doc.id, " => ", doc.data());
+                });
+            }
+            else if (value.type == 'review-status') {
+                console.log('inside inside')
+                const q = query(collection(db, 'Requests'), where('Status', '==', value.value));
+                console.log(q)
+                const querySnapshot = await getDocs(q);
+                console.log(querySnapshot)
+                querySnapshot.forEach((doc) => {
+                    // doc.data() is never undefined for query doc snapshots
+                    console.log(doc.id, " => ", doc.data());
+                });
+            }
+            else if (value.type == 'reviewer') {
+                const q = query(collection(db, 'Requests'), where('Reviewer', '==', value.type));
+                const querySnapshot = await getDocs(q);
+                querySnapshot.forEach((doc) => {
+                    // doc.data() is never undefined for query doc snapshots
+                    console.log(doc.id, " => ", doc.data());
+                });
+            }
+        }
+    };
     return (
       
         <>       
