@@ -8,7 +8,6 @@ import { DocumentReference, Timestamp, collection, doc, getDoc, getDocs, query, 
 import CustomNextPage from "../../../types/custom";
 import FullLayout from "../../../src/layouts/full/FullLayout";
 import withRole from "../../../src/components/hocs/withRole";
-import FilterUIFaculty from "../../filterUI/FacultyFilter";
 import FacultyFilter from "../../filterUI/FacultyFilter";
 import { validateYupSchema } from "formik";
 //Requests collection
