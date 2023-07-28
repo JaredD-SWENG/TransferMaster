@@ -186,20 +186,7 @@ const Profile = () => {
           </Box>
         ))}
         <Box mt={2}>
-          <Box bgcolor="primary.light" p={3} mb={3} overflow="hidden" position="relative">
-            <Box display="flex" justifyContent="space-between">
-              <Box>
-                <Typography variant="h5" mb={2}>
-                  Unlimited <br />
-                  Access
-                </Typography>
-                <Button variant="contained" color="primary">
-                  Upgrade
-                </Button>
-              </Box>
-              <img src={"/images/backgrounds/unlimited-bg.png"} alt="unlimited" className="signup-bg"></img>
-            </Box>
-          </Box>
+          
           <Button onClick={handleLogout}href="/auth/auth1/login" variant="outlined" color="primary" component={Link} fullWidth>
             Logout
           </Button>

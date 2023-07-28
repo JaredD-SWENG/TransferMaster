@@ -26,11 +26,13 @@ interface RequestType {
     ExternalSyllabus: DocumentReference;
     Status: string;
     Date: string;
+    Reviewer: DocumentReference;
 }
 
 interface RequestDisplayType {
     id: string;
     Requester: string;
+    Reviewer: string;
     ExternalSyllabus: string; // name of syllabus should be displayed as a string
     Status: string;
     Date: string;
@@ -38,7 +40,7 @@ interface RequestDisplayType {
 
 // Users collection - only reviewers
 interface FacultyType {
-    id: number;
+    id: string;
     name: string;
     department: string;
     syllabus: string[];
@@ -48,6 +50,7 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
     const [requests, setRequests] = useState<RequestDisplayType[]>([]);
     const [selectedFaculty, setSelectedFaculty] = useState<{ [key: string]: string | '' }>({});
     const [faculty, setFaculty] = useState<FacultyType[]>([]);
+    const [assignedTo, setAssignedTo] = useState<string>('');
     const router = useRouter();
 
     //view more details about the request such as comments
@@ -82,11 +85,16 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                     // Fetch the Requester document
                     const requesterSnapshot = await getDoc(requestData.Requester);
                     const requesterData = requesterSnapshot.data()?.Name;
+
+                    const reviewerSnapshot = await getDoc(requestData.Reviewer);
+                    const reviewerData = reviewerSnapshot.data()?.Name;
+                    setAssignedTo(reviewerData);
         
                     fetchedRequests.push({
                         id: doc.id,
                         Requester: requesterData,
                         ExternalSyllabus: syllabusData,
+                        Reviewer: reviewerData,
                         Status: requestData.Status,
                         Date: date,
                     });
@@ -155,7 +163,7 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                 // Update the "Reviewer" field of the selected request in the database with the reviewer document ID
                 const requestRef = doc(db, "Requests", requestId);
                 try {
-                    await updateDoc(requestRef, { Reviewer: reviewerDocId });
+                    await updateDoc(requestRef, { Reviewer: reviewerDocId ? doc(db, "Users", reviewerDocId) : null });
                     console.log("Update successful");
                 } catch (error) {
                     console.error("Update failed:", error);
@@ -192,110 +200,122 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                 </Grid>
             }
         >
-            <TableContainer>
-                <Table
-                    aria-label="simple table"
+        <TableContainer>
+        <Table
+          aria-label="simple table"
+          sx={{
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <TableHead>
+            <TableRow>
+              <TableCell>
+                <Typography variant="subtitle2" fontWeight={600}>Requested by</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="subtitle2" fontWeight={600}>Syllabus</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="subtitle2" fontWeight={600}>Course Category</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="subtitle2" fontWeight={600}>Assigned</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="subtitle2" fontWeight={600}>Status</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="subtitle2" fontWeight={600}>Date</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="subtitle2" fontWeight={600}>Assign to</Typography>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {requests.map((request) => (
+              <TableRow key={request.id}>
+                <TableCell>
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    {request.Requester}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
+                    {request.ExternalSyllabus}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
+                    Course Category
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
+                    {request.Reviewer}
+                  </Typography>
+                </TableCell>
+               
+                <TableCell>
+                <Chip
                     sx={{
-                        whiteSpace: 'nowrap',
+                      bgcolor:
+                        request.Status === 'To-do'
+                          ? (theme) => theme.palette.error.light
+                          : request.Status === 'In progress'
+                          ? (theme) => theme.palette.warning.light
+                          : request.Status === 'Approved'
+                          ? (theme) => theme.palette.success.light
+                          : request.Status === 'Rejected'
+                          ? (theme) => theme.palette.error.light
+                          : (theme) => theme.palette.secondary.light,
+                      color:
+                        request.Status === 'To-do'
+                          ? (theme) => theme.palette.error.main
+                          : request.Status === 'In progress'
+                          ? (theme) => theme.palette.warning.main
+                          : request.Status === 'Approved'
+                          ? (theme) => theme.palette.success.main
+                          : request.Status === 'Rejected'
+                          ? (theme) => theme.palette.error.main
+                          : (theme) => theme.palette.secondary.main,
+                      borderRadius: '8px',
                     }}
-                >
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>
-                                <Typography variant="subtitle2" fontWeight={600}>Requested by</Typography>
-                            </TableCell>
-                            <TableCell>
-                                <Typography variant="subtitle2" fontWeight={600}>Syllabus</Typography>
-                            </TableCell>
-                            <TableCell>
-                                <Typography variant="subtitle2" fontWeight={600}>Course Category</Typography>
-                            </TableCell>
-                            <TableCell>
-                                <Typography variant="subtitle2" fontWeight={600}>Assigned</Typography>
-                            </TableCell>
-                            <TableCell>
-                                <Typography variant="subtitle2" fontWeight={600}>Status</Typography>
-                            </TableCell>
-                            <TableCell>
-                                <Typography variant="subtitle2" fontWeight={600}>Date</Typography>
-                            </TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {requests.map((request) => (
-                            <TableRow key={request.id}>
-                                <TableCell>
-                                    <Typography variant="subtitle2" fontWeight={600}>
-                                        {request.Requester}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
-                                        {request.ExternalSyllabus}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
-                                        Course Category
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <CustomSelect
-                                        value={selectedFaculty[request.id] || ''}
-                                        onChange={handleAssign(request.id)}
-                                        size="small"
-                                    >
-                                        {faculty.map((facultyMember) => (
-                                            <MenuItem key={facultyMember.id} value={facultyMember.name}>
-                                                {facultyMember.name}
-                                            </MenuItem>
-                                        ))}
-                                    </CustomSelect>
-                                </TableCell>
-                                <TableCell>
-                                    <Chip
-                                        sx={{
-                                            bgcolor:
-                                                request.Status === 'To-do'
-                                                ? (theme) => theme.palette.error.light
-                                                : request.Status === 'In progress'
-                                                ? (theme) => theme.palette.warning.light
-                                                : request.Status === 'Approved'
-                                                ? (theme) => theme.palette.success.light
-                                                : request.Status === 'Rejected'
-                                                ? (theme) => theme.palette.error.light
-                                                : (theme) => theme.palette.secondary.light,
-                                            color:    
-                                                request.Status === 'To-do'
-                                                ? (theme) => theme.palette.error.main
-                                                : request.Status === 'In progress'
-                                                ? (theme) => theme.palette.warning.main
-                                                : request.Status === 'Approved'
-                                                ? (theme) => theme.palette.success.main
-                                                : request.Status === 'Rejected'
-                                                ? (theme) => theme.palette.error.main
-                                                : (theme) => theme.palette.secondary.main,
-                                            borderRadius: '8px',
-                                        }}
-                                        size="small"
-                                        label={request.Status}
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
-                                        {request.Date}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Button variant="outlined" onClick={() => viewMoreDetails(request.id)} >
-                                        View Details
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                    size="small"
+                    label={request.Status}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
+                    {request.Date}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <CustomSelect
+                    value={selectedFaculty[request.id] || assignedTo}
+                    onChange={handleAssign(request.id)}
+                    size="small"
+                    displayEmpty  // This allows the placeholder to be displayed when no value is selected
+                    >
+                    {faculty.map((facultyMember) => (
+                      <MenuItem key={facultyMember.id} value={facultyMember.name}>
+                        {facultyMember.name}
+                      </MenuItem>
+                    ))}
+                  </CustomSelect>
+                </TableCell>
+               
+                <TableCell>
+                    <Button variant="outlined" onClick={() => viewMoreDetails(request.id)} >
+                      View Details
+                    </Button>
+                </TableCell>
+                
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
         </DashboardCard>
     );
 };

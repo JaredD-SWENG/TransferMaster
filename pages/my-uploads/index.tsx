@@ -184,7 +184,7 @@ const MyUploads: CustomNextPage = () => {
         </Table>
       </TableContainer>
       <Box my={3} display="flex" justifyContent={'center'}>
-        <Pagination count={10} color="primary" />
+        <Pagination count={5} color="primary" />
       </Box>
     </Box>
   );

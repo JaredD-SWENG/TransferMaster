@@ -10,7 +10,8 @@ import {
     DialogContentText,
     Typography, 
     Card,
-    Grid,} from "@mui/material";
+    Grid,
+    LinearProgress,} from "@mui/material";
 import ParentCard from "../../src/components/shared/ParentCard";
 import PageContainer from "../../src/components/container/PageContainer";
 import CustomFormLabel from "../../src/components/forms/theme-elements/CustomFormLabel";
@@ -34,7 +35,18 @@ import {
   Divider,
 } from '@mui/material';
 import { useSelector, AppState } from '../../src/store/Store';
+import { styled } from '@mui/material/styles';
 
+const CustomLinearProgress = styled(LinearProgress)(({ theme }) => ({
+    height: 10, // Adjust the height to make the loading bar thicker
+    borderRadius: 5, // Add some border radius for a rounded appearance
+    backgroundColor: theme.palette.grey[300], // Change the background color
+    '& .MuiLinearProgress-bar': {
+      borderRadius: 5, // Add border radius for the progress bar
+      backgroundColor: theme.palette.primary.main, // Change the progress bar color
+    },
+  }));
+  
 
 type Props = {
   title: string;
@@ -50,6 +62,7 @@ interface SyllabusProps {
     credits: number;
     textbook: string;
     learningObjectives: string[];
+
 }
 
 interface SyllabusDoc {
@@ -108,7 +121,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
     const [extTextbook, setExtTextbook ] = useState('');
     const [extObjectives, setExtObjectives ] = useState([]);
     const [extDownloadUrl, setExtDownloadUrl] = useState('');
-        
+            
     const [psuCourseName, setPsuCourseName] = useState("");
     const [psuCredits, setPsuCredits] = useState(0);
     const [psuTextbook, setPsuTextbook ] = useState('');
@@ -120,6 +133,9 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
 
     const [extFullText, setExtFullText] = useState('');
     const [psuFullText, setPsuFullText] = useState('');
+    
+
+    const [loadingProgress, setLoadingProgress] = useState(0);
 
     //const [learningObjectivePercentages, setLearningObjectivePercentages] = useState<number[] | null>(null);
 
@@ -188,11 +204,25 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                 summary: data.general_summary
             })
             console.log(learningObjectivePercentages);
+            // Simulate loading progress (you can replace this with actual progress updates if you have them)
         } catch (error) {
             console.error(`Error calling lambda function: ${error}`);
         }
         setIsLoading(false);
     }
+
+    useEffect(() => {
+        if (isLoading) {
+          const simulateProgress = async () => {
+            for (let i = 1; i <= 100; i += 1) {
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+              setLoadingProgress(i);
+            }
+            setLoadingProgress(100);
+          };
+          simulateProgress();
+        }
+      }, [isLoading]);
 
     const handleCompare = () => {
         const sum = sliderValues.reduce((a, b) => a + b, 0);
@@ -209,9 +239,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
             console.log(syllabusComponents);
             setShowCompare(false);
             setShowResult(true);
-            if(showResult == true){
-                setShowCompare(true);
-            }
+           
         }
     };
 
@@ -219,6 +247,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
         setOpen(false);
     };
 
+    
     const handleExtractedData = (data: { course: any; credits: React.SetStateAction<number>; textbook: any; learningObjectives: any; fullText: string, downloadUrl: string}) => {
         // Update the state or perform any other actions with the extracted data
         // For example:
@@ -239,10 +268,13 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
             setPsuTextbook(data.textbook);
         }
 
+       
         setPsuObjectives(data.learningObjectives);
         setPsuDownloadUrl(data.downloadUrl);
-        console.log("PSU URL: " + data.downloadUrl);
+        //console.log("PSU URL: " + data.downloadUrl);
     };
+    
+
       
     useEffect(() => {
         const fetchSyllabusData = async () => {
@@ -257,7 +289,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                 console.log(syllabusDoc)
                 if (syllabusDoc.exists()) {
                     const syllabusData = syllabusDoc.data() as DocumentData;
-                    const { CourseName, Credits, Textbook, Objectives } = syllabusData;
+                    const { CourseName, Credits, Textbook, Objectives, IsSelectable, OCRContent } = syllabusData;
                     setExtCourseName(CourseName);
                     setExtCredits(Credits);
                     setExtTextbook(Textbook);
@@ -265,16 +297,16 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                     const syllabusURLRef = syllabusData.SyllabusURL;
                     const syllabusURLDocSnapshot = await getDoc(syllabusURLRef);
 
+                    
                     if (syllabusURLDocSnapshot.exists()) {
                         let syllabusURLDocData = syllabusURLDocSnapshot.data() as SyllabusURLDoc;
                         let storageFileURL = syllabusURLDocData.fileUrl;
-
-
                         const fileRef = ref(storage, storageFileURL);
                         const fileBytes = await getBytes(fileRef);
-                        const downloadUrl = await getDownloadURL(ref(storage, storageFileURL));
+                        const downloadUrl = await getDownloadURL(fileRef);
                         setExtDownloadUrl(downloadUrl);
                         
+                        if(IsSelectable){
                         const loadingTask = getDocument({ data: fileBytes });
                         const pdf = await loadingTask.promise;
 
@@ -284,7 +316,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
 
                             let extFullText = '';
                             // Loop through each page and extract text
-                            for (let i = 1; i <= pdf.numPages; i++) {
+                            for (let i = 1; i <= Math.min(5, pdf.numPages); i++) {
                                 const page = await pdf.getPage(i);
 
                                 // Extract the text content
@@ -300,9 +332,11 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                             setExtFullText(extFullText);
                             //console.log("EXTERNAL", extFullText)
                         })
+                    }else{
+                        setExtFullText(OCRContent);
+                    }
                     }
 
-                    console.log(" EXT URL: " + extDownloadUrl);
                 }
             }
         }; 
@@ -423,11 +457,15 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                 </Grid>
                 <Grid item xs={12} mt={3} display="flex" justifyContent="center" alignItems="center">
                     {showCompare && (
-                        <Button variant="contained" component="span" onClick={handleCompare}>
+                        <Button variant="contained" component="span" onClick={handleCompare} disabled={isLoading}>
                             Compare
                         </Button>
                     )}
-                    {isLoading && <Card>Loading...</Card>}
+                    {isLoading && (
+      <Box sx={{ width: "100%", mt: 2 }}>
+        <CustomLinearProgress variant="determinate" value={loadingProgress} />
+      </Box>
+    )}
                 </Grid>
                 <Grid item xs={12} display="flex" justifyContent="center" alignItems="center">
                     {displayText && <Card>{displayText}</Card>}

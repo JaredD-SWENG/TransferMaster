@@ -110,7 +110,7 @@ const DemoUpload: React.FC<UploadPopupProps> = ({ onExtractedData, userID }) => 
 
   // OS Parser API call
   async function parse_doc(data: any) {
-    const api_token = '9c263dc72cfcf24432a1ae9acdab709c55ba14f4';
+    const api_token = process.env.NEXT_PUBLIC_OS_PARSER_API_TOKEN;;
     const response = await axios.post(
       'https://parser-api.opensyllabus.org/v1/',
       data,
@@ -295,7 +295,7 @@ const handleOkClick = async () => {
               let fullText = '';
     
               // Loop through each page and extract text
-              for (let i = 1; i <= pdf.numPages; i++) {
+              for (let i = 1; i <= Math.min(5, pdf.numPages); i++) {
                 const page = await pdf.getPage(i);
     
                 // Extract the text content
