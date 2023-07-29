@@ -1,5 +1,5 @@
 // ChatBox.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -9,7 +9,7 @@ import {
   Button,
 } from "@mui/material";
 
-// Define the custom styles using the SxProps type
+// Define the custom styles using the CSSProperties type
 const chatStyles: Record<string, React.CSSProperties> = {
   chatMessagesContainer: {
     display: "flex",
@@ -28,6 +28,15 @@ const chatStyles: Record<string, React.CSSProperties> = {
     alignSelf: "flex-start",
     backgroundColor: "#007bff",
   },
+  typingBubble: {
+    alignSelf: "flex-start",
+    backgroundColor: "#dcdcdc",
+    maxWidth: "70%",
+    padding: "10px 16px",
+    borderRadius: "16px",
+    margin: "8px",
+    display: "inline-block",
+  },
 };
 
 interface ChatBoxProps {
@@ -44,14 +53,24 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   chatHistory,
 }) => {
   const [message, setMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  useEffect(() => {
+    setIsSending(false); // Reset isSending when the chat box is opened again
+    setMessage(""); // Clear the input field when the chat box is opened again
+  }, [open]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setMessage(event.target.value);
   };
 
-  const handleSendMessage = () => {
-    onSendMessage(message);
-    setMessage("");
+  const handleSendMessage = async () => {
+    if (message.trim() !== "") {
+      setIsSending(true);
+      await onSendMessage(message);
+      setMessage("");
+      setIsSending(false);
+    }
   };
 
   return (
@@ -72,6 +91,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
               {msg}
             </div>
           ))}
+          {/* Show typing bubbles while the bot is processing */}
+          {isSending && <div style={chatStyles.typingBubble}>...</div>}
         </Box>
 
         {/* Input field for typing messages */}
@@ -86,7 +107,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         />
       </DialogContent>
       <Box display="flex" justifyContent="flex-end" p={2}>
-        <Button onClick={handleSendMessage} variant="contained" color="primary">
+        <Button
+          onClick={handleSendMessage}
+          variant="contained"
+          color="primary"
+          disabled={isSending}
+        >
           Send
         </Button>
       </Box>

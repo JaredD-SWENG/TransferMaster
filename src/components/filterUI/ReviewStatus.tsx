@@ -3,7 +3,7 @@ import { Typography } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 import CustomTextField from '../forms/theme-elements/CustomTextField';
 
-const statuses = ['Submitted', 'In-Progress', 'Approved', 'Rejected'];
+const statuses = ['Submitted', 'In Progress', 'Approved', 'Rejected'];
 
 interface Filter {
     value: string | null;

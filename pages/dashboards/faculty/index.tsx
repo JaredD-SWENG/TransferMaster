@@ -1,61 +1,52 @@
-import { MenuItem, TableContainer, Table, TableHead, TableRow, TableCell, Typography, TableBody, Stack, Avatar, Chip, Box, Card, Button, Grid } from "@mui/material"
-import CustomSelect from "../../../src/components/forms/theme-elements/CustomSelect"
+import { TableContainer, Table, TableHead, TableRow, TableCell, Typography, TableBody, Stack, Chip, Box, Button, Grid } from "@mui/material"
 import DashboardCard from "../../../src/components/shared/DashboardCard"
-import { Key, ReactElement, JSXElementConstructor, ReactFragment, ReactPortal, useState, useEffect } from "react";
-import { Router, useRouter } from "next/router";
+import { ReactElement, useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import { auth, db } from "../../../config/firebase";
 import { DocumentData, DocumentReference, QuerySnapshot, Timestamp, collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import CustomNextPage from "../../../types/custom";
 import FullLayout from "../../../src/layouts/full/FullLayout";
 import withRole from "../../../src/components/hocs/withRole";
-import FilterUIFaculty from "../../filterUI/FacultyFilter";
 import FacultyFilter from "../../filterUI/FacultyFilter";
-import { validateYupSchema } from "formik";
+
 //Requests collection
 interface RequestType {
-    id: string;
-    Requester: DocumentReference;
-    ExternalSyllabus: DocumentReference;
-    ExternalSyllabusPath: string;
-    Status: string;
-    Date: string;
+  id: string;
+  Requester: DocumentReference;
+  ExternalSyllabus: DocumentReference;
+  ExternalSyllabusPath: string;
+  Status: string;
+  Date: string;
 }
 
 interface RequestDisplayType {
-    id: string;
-    Requester: string;
-    ExternalSyllabus: string; //name of syllabus should be displayed as a string
-    CourseCategory: string;
-    ExternalSyllabusPath: string;
-    Status: string;
-    Date: string;
+  id: string;
+  Requester: string;
+  ExternalSyllabus: string; //name of syllabus should be displayed as a string
+  CourseCategory: string;
+  ExternalSyllabusPath: string;
+  Status: string;
+  Date: string;
 }
 
 const FacultyDashboard: CustomNextPage = () => {
     const [requests, setRequests] = useState<RequestDisplayType[]>([]);
-    const [requestsCopy, setRequestsCopy] = useState<RequestDisplayType[]>([]);
     const [userID, setUserID] = useState<string | undefined>();
-        const router = useRouter();
+    const router = useRouter();
         
-        const handleClick = (requestID: string, externalSyllabus: string, userID: string | undefined) => {
-            console.log(externalSyllabus);
-            console.log("userID", userID);
-            router.push({
-                pathname: "../../comparison",
-                query: { requestID, externalSyllabus, userID },
-            });
-        };
-
-    //are we using this?
-    const handleUploadHistoryClick = () => {
-        router.push('../my-uploads')
-    }
+    const handleClick = (requestID: string, externalSyllabus: string, userID: string | undefined) => {
+        console.log(externalSyllabus);
+        console.log("userID", userID);
+        router.push({
+            pathname: "../../comparison",
+            query: { requestID, externalSyllabus, userID },
+        });
+    };
 
     useEffect(() => {
         const fetchRequests = async () => {
             const currentUser = auth.currentUser;
             let userId = null;
-
             if (currentUser !== null) {
                 const email = currentUser.email;
                 const q = query(collection(db, 'Users'), where('Email', '==', email));
@@ -68,11 +59,11 @@ const FacultyDashboard: CustomNextPage = () => {
                     console.log(userId)
                 }
             }
-
             const requestsCollection = collection(db, 'Requests');
-
+            const findMe = "/Users/"+userId;
+            console.log("findMe", findMe)
             const querySnapshot = await getDocs(
-                query(requestsCollection, where('Reviewer', '==', userId))
+                query(requestsCollection, where('Reviewer', '==', userId ? doc(db, 'Users', userId) : null ))
             );
 
             const fetchedRequests: RequestDisplayType[] = [];
@@ -107,13 +98,10 @@ const FacultyDashboard: CustomNextPage = () => {
             }
 
             setRequests(fetchedRequests);
-            setRequestsCopy(fetchedRequests);
         };
   
         fetchRequests();
     }, []); // <-- Empty dependency array
-
-    const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
 
     interface Filter {
         value: string | null;
@@ -123,16 +111,12 @@ const FacultyDashboard: CustomNextPage = () => {
     console.log("Requests:", requests);
 
     const handleSelect = async (value: Filter | null) => {
-
         console.log(value);
-        let querySnapshot: QuerySnapshot<DocumentData> | undefined;
-    
         if (value !== null) {
             if (value.value === null) {
                 const fetchRequests = async () => {
                     const currentUser = auth.currentUser;
                     let userId = null;
-        
                     if (currentUser !== null) {
                         const email = currentUser.email;
                         const q = query(collection(db, 'Users'), where('Email', '==', email));
@@ -145,11 +129,11 @@ const FacultyDashboard: CustomNextPage = () => {
                             console.log(userId)
                         }
                     }
-        
                     const requestsCollection = collection(db, 'Requests');
-        
+                    const findMe = "/Users/"+userId;
+                    console.log("findMe", findMe)
                     const querySnapshot = await getDocs(
-                        query(requestsCollection, where('Reviewer', '==', userId))
+                        query(requestsCollection, where('Reviewer', '==', userId ? doc(db, 'Users', userId) : null ))
                     );
         
                     const fetchedRequests: RequestDisplayType[] = [];
@@ -184,35 +168,30 @@ const FacultyDashboard: CustomNextPage = () => {
                     }
         
                     setRequests(fetchedRequests);
-                    setRequestsCopy(fetchedRequests);
                 };
-            
+          
                 fetchRequests();
             }
-            if (value.type === 'category') {
-                const newRequests: RequestDisplayType[] = [];
-
-                requests.forEach((request) => {
-                    if (request.CourseCategory === value.value) {
-                        newRequests.push(request);
-                    }
-                });
-
-                setRequests(newRequests);
-            }
-            else if (value.type === 'review-status') {
-                const newRequests: RequestDisplayType[] = [];
-
-                requests.forEach((request) => {
-                    if (request.Status === value.value) {
-                        newRequests.push(request);
-                    }
-                });
-
-                setRequests(newRequests);
-            }
-            else if (value.type === 'date') {
-                if (value.value !== null) {
+            else {
+                if (value.type == 'category') {
+                    const newRequests: RequestDisplayType[] = [];
+                    requests.forEach((request) => {
+                        if (request.CourseCategory === value.value) {
+                            newRequests.push(request);
+                        }
+                    });
+                    setRequests(newRequests);
+                }
+                else if (value.type === 'review-status') {
+                    const newRequests: RequestDisplayType[] = [];
+                    requests.forEach((request) => {
+                        if (request.Status === value.value) {
+                            newRequests.push(request);
+                        }
+                    });
+                    setRequests(newRequests);
+                }
+                else if (value.type === 'date') {
                     let noOfDays: number = parseInt(value.value[5]);
                     if (!Number.isNaN(parseInt(value.value[6]))) {
                         noOfDays *= 10;
@@ -220,59 +199,27 @@ const FacultyDashboard: CustomNextPage = () => {
                     }
                     let date = new Date();
                     date.setDate(date.getDate() - noOfDays);
-
                     console.log(date.toLocaleDateString());
-
                     const newRequests: RequestDisplayType[] = [];
-
                     requests.forEach((request) => {
                         if (request.Date >= date.toLocaleDateString()) {
                             newRequests.push(request);
                         }
                     });
-
                     setRequests(newRequests); 
                 }
             }
-    
-            if (querySnapshot) {
-                const fetchedRequests: RequestDisplayType[] = [];
-    
-                for (const doc of querySnapshot.docs) {
-                    const requestData = doc.data() as RequestType;
-                    const timestamp = requestData.Date as unknown as Timestamp;
-                    const date = timestamp.toDate().toLocaleDateString();
-    
-                    const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
-                    const externalSyllabusPath = requestData.ExternalSyllabus.path;
-                    const syllabusName = syllabusSnapshot.data()?.CourseName;
-                    const syllabusCategory = syllabusSnapshot.data()?.CourseCategory;
-    
-                    const requesterSnapshot = await getDoc(requestData.Requester);
-                    const requesterData = requesterSnapshot.data()?.Name;
-    
-                    fetchedRequests.push({
-                        id: doc.id,
-                        Requester: requesterData,
-                        ExternalSyllabus: syllabusName,
-                        CourseCategory: syllabusCategory,
-                        ExternalSyllabusPath: externalSyllabusPath,
-                        Status: requestData.Status,
-                        Date: date,
-                    });
-                }
-                setRequests(fetchedRequests);
-            }
         }
     };
-    
 
     return (
         <>       
             <Grid >
-                <FacultyFilter onSelect={handleSelect}/>    
+                <FacultyFilter onSelect={handleSelect}/>
             </Grid>
-            <DashboardCard title="Requests">
+            <DashboardCard
+                title="Requests"       
+            >
                 <TableContainer>
                     <Table
                         aria-label="simple table"
@@ -321,7 +268,7 @@ const FacultyDashboard: CustomNextPage = () => {
                                     </TableCell>
                                     <TableCell>
                                         <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
-                                        {request.CourseCategory}
+                                            {request.CourseCategory}
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
@@ -329,24 +276,24 @@ const FacultyDashboard: CustomNextPage = () => {
                                             sx={{
                                                 bgcolor:
                                                     request.Status === 'Submitted'
-                                                        ? (theme) => theme.palette.error.light
-                                                        : request.Status === 'In progress'
-                                                            ? (theme) => theme.palette.warning.light
-                                                            : request.Status === 'Approved'
-                                                                ? (theme) => theme.palette.success.light
-                                                                : request.Status === 'Rejected'
-                                                                    ? (theme) => theme.palette.info.light
-                                                                    : (theme) => theme.palette.secondary.light,
+                                                    ? (theme) => theme.palette.error.light
+                                                    : request.Status === 'In progress'
+                                                    ? (theme) => theme.palette.warning.light
+                                                    : request.Status === 'Approved'
+                                                    ? (theme) => theme.palette.success.light
+                                                    : request.Status === 'Rejected'
+                                                    ? (theme) => theme.palette.error.light
+                                                    : (theme) => theme.palette.secondary.light,
                                                 color:
                                                     request.Status === 'Submitted'
-                                                        ? (theme) => theme.palette.error.main
-                                                        : request.Status === 'In progress'
-                                                            ? (theme) => theme.palette.warning.main
-                                                            : request.Status === 'Approved'
-                                                                ? (theme) => theme.palette.success.main
-                                                                : request.Status === 'Rejected'
-                                                                    ? (theme) => theme.palette.info.main
-                                                                    : (theme) => theme.palette.secondary.main,
+                                                    ? (theme) => theme.palette.error.main
+                                                    : request.Status === 'In progress'
+                                                    ? (theme) => theme.palette.warning.main
+                                                    : request.Status === 'Approved'
+                                                    ? (theme) => theme.palette.success.main
+                                                    : request.Status === 'Rejected'
+                                                    ? (theme) => theme.palette.error.main
+                                                    : (theme) => theme.palette.secondary.main,
                                                 borderRadius: '8px',
                                             }}
                                             size="small"

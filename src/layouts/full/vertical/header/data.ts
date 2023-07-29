@@ -78,7 +78,7 @@ const profile: ProfileType[] = [
     icon: "/images/svgs/icon-briefcase.svg",
   },
   {
-    href: "/apps/notes",
+    href: "/comparison/PreEvaluate",
     title: "Pre-Evaluate",
     subtitle: "Check Two Syllabi",
     icon: "/images/svgs/icon-tasks.svg",

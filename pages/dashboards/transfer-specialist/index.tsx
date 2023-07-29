@@ -5,7 +5,6 @@ import { MenuItem, TableContainer, Table, TableHead, TableRow, TableCell, Typogr
 import CustomSelect from "../../../src/components/forms/theme-elements/CustomSelect";
 import DashboardCard from "../../../src/components/shared/DashboardCard";
 import { Timestamp } from "firebase/firestore";
-import { auth } from '../../../config/firebase';
 import CustomNextPage from "../../../types/custom";
 import FullLayout from "../../../src/layouts/full/FullLayout";
 import withRole from "../../../src/components/hocs/withRole";
@@ -23,10 +22,10 @@ interface Filter {
 interface RequestType {
     id: string;
     Requester: DocumentReference;
-    Reviewer: string;
     ExternalSyllabus: DocumentReference;
     Status: string;
     Date: string;
+    Reviewer: DocumentReference;
 }
 
 interface RequestDisplayType {
@@ -51,6 +50,7 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
     const [requests, setRequests] = useState<RequestDisplayType[]>([]);
     const [selectedFaculty, setSelectedFaculty] = useState<{ [key: string]: string | '' }>({});
     const [faculty, setFaculty] = useState<FacultyType[]>([]);
+    const [assignedTo, setAssignedTo] = useState<string>('');
     const router = useRouter();
 
     //view more details about the request such as comments
@@ -60,7 +60,6 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
         query: { requestID },
         });
     };
-  
 
     useEffect(() => {
 
@@ -87,12 +86,14 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                     const requesterSnapshot = await getDoc(requestData.Requester);
                     const requesterData = requesterSnapshot.data()?.Name;
 
-                    const reviewerId = requestData.Reviewer;
+                    const reviewerSnapshot = await getDoc(requestData.Reviewer);
+                    const reviewerData = reviewerSnapshot.data()?.Name;
+                    setAssignedTo(reviewerData);
         
                     fetchedRequests.push({
                         id: doc.id,
                         Requester: requesterData,
-                        Reviewer: reviewerId,
+                        Reviewer: reviewerData,
                         ExternalSyllabus: syllabusData,
                         CourseCategory: syllabusCategory,
                         Status: requestData.Status,
@@ -163,35 +164,20 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                 // Update the "Reviewer" field of the selected request in the database with the reviewer document ID
                 const requestRef = doc(db, "Requests", requestId);
                 try {
-                    await updateDoc(requestRef, { Reviewer: reviewerDocId });
+                    await updateDoc(requestRef, { Reviewer: reviewerDocId ? doc(db, "Users", reviewerDocId) : null });
                     console.log("Update successful");
                 } catch (error) {
                     console.error("Update failed:", error);
                 }
             }
         }
-    };
-
-
-    // function handleClick() {
-    //   return (
-    //       router.push('../../comparison/')
-    //   );
-    // };
-  
+    };  
 
     console.log("Requests:", requests);
     console.log(faculty);
 
-
-    const [selectedFilter, setSelectedFilter] = useState<Filter | null>(null);
-
-
     const handleSelect = async (value: Filter | null) => {
-
         console.log(value);
-        let querySnapshot: QuerySnapshot<DocumentData> | undefined;
-    
         if (value !== null) {
             if (value.value === null) {
                 const fetchRequests = async () => {
@@ -202,26 +188,28 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
     
                         querySnapshot.forEach(async (doc) => {
                             const requestData = doc.data() as RequestType;
-    
+                
                             // Convert the 'Date' object to a readable format
                             const timestamp = requestData.Date as unknown as Timestamp;
                             const date = timestamp.toDate().toLocaleDateString();
-    
+                
                             // Fetch the ExternalSyllabus document
                             const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
                             const syllabusData = syllabusSnapshot.data()?.CourseName;
                             const syllabusCategory = syllabusSnapshot.data()?.CourseCategory;
-    
+                
                             // Fetch the Requester document
                             const requesterSnapshot = await getDoc(requestData.Requester);
                             const requesterData = requesterSnapshot.data()?.Name;
-
-                            const reviewerId = requestData.Reviewer;
+        
+                            const reviewerSnapshot = await getDoc(requestData.Reviewer);
+                            const reviewerData = reviewerSnapshot.data()?.Name;
+                            setAssignedTo(reviewerData);
                 
                             fetchedRequests.push({
                                 id: doc.id,
                                 Requester: requesterData,
-                                Reviewer: reviewerId,
+                                Reviewer: reviewerData,
                                 ExternalSyllabus: syllabusData,
                                 CourseCategory: syllabusCategory,
                                 Status: requestData.Status,
@@ -238,110 +226,55 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
             
                 fetchRequests();
             }
-            if (value.type == 'category') {
-                const newRequests: RequestDisplayType[] = [];
-
-                requests.forEach((request) => {
-                    if (request.CourseCategory === value.value) {
-                        newRequests.push(request);
-                    }
-                });
-
-                setRequests(newRequests);
-            }
-            else if (value.type == 'review-status') {
-                const newRequests: RequestDisplayType[] = [];
-
-                requests.forEach((request) => {
-                    if (request.Status === value.value) {
-                        newRequests.push(request);
-                    }
-                });
-
-                setRequests(newRequests);
-            }
-            else if (value.type == 'faculty') {
-                const newRequests: RequestDisplayType[] = [];
-                let facultyId: string;
-
-                faculty.forEach((facultyMember) => {
-                    if (facultyMember.name === value.value) {
-                        facultyId = facultyMember.id;
-                    }
-                });
-
-                requests.forEach((request) => {
-                    if (request.Reviewer === facultyId) {
-                        newRequests.push(request);
-                    }
-                });
-
-                setRequests(newRequests);
-            }
-            else if (value.type === 'date') {
-                if (value.value !== null) {
+            else {
+                if (value.type == 'category') {
+                    const newRequests: RequestDisplayType[] = [];
+                    requests.forEach((request) => {
+                        if (request.CourseCategory === value.value) {
+                            newRequests.push(request);
+                        }
+                    });
+                    setRequests(newRequests);
+                }
+                else if (value.type == 'review-status') {
+                    const newRequests: RequestDisplayType[] = [];
+                    requests.forEach((request) => {
+                        if (request.Status === value.value) {
+                            newRequests.push(request);
+                        }
+                    });
+                    setRequests(newRequests);
+                }
+                else if (value.type == 'faculty') {
+                    const newRequests: RequestDisplayType[] = [];
+                    requests.forEach((request) => {
+                        if (request.Reviewer === value.value) {
+                            newRequests.push(request);
+                        }
+                    });
+                    setRequests(newRequests);
+                }
+                else if (value.type === 'date') {
                     let noOfDays: number = parseInt(value.value[5]);
-                    if (parseInt(value.value[6]) !== null) {
+                    if (!Number.isNaN(parseInt(value.value[6]))) {
                         noOfDays *= 10;
                         noOfDays += parseInt(value.value[6]);
                     }
-                    console.log(noOfDays);
                     let date = new Date();
                     date.setDate(date.getDate() - noOfDays);
-
                     console.log(date.toLocaleDateString());
-
                     const newRequests: RequestDisplayType[] = [];
-
                     requests.forEach((request) => {
                         if (request.Date >= date.toLocaleDateString()) {
                             newRequests.push(request);
                         }
                     });
-
-                    setRequests(newRequests); 
+                    setRequests(newRequests);
                 }
-            }
-    
-            if (querySnapshot) {
-                const fetchedRequests: RequestDisplayType[] = [];
-    
-                // Change to for...of loop to handle async operation
-                for (const doc of querySnapshot.docs) {
-                    const requestData = doc.data() as RequestType;
-        
-                    // Convert the 'Date' object to a readable format
-                    const timestamp = requestData.Date as unknown as Timestamp;
-                    const date = timestamp.toDate().toLocaleDateString();
-        
-                    // Fetch the ExternalSyllabus document
-                    const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
-                    const syllabusData = syllabusSnapshot.data()?.CourseName;
-                    const syllabusCategory = syllabusSnapshot.data()?.CourseCategory;
-        
-                    // Fetch the Requester document
-                    const requesterSnapshot = await getDoc(requestData.Requester);
-                    const requesterData = requesterSnapshot.data()?.Name;
-
-                    const reviewerId = requestData.Reviewer;
-        
-                    fetchedRequests.push({
-                        id: doc.id,
-                        Requester: requesterData,
-                        Reviewer: reviewerId,
-                        ExternalSyllabus: syllabusData,
-                        CourseCategory: syllabusCategory,
-                        Status: requestData.Status,
-                        Date: date,
-                    });
-                }
-    
-                setRequests(fetchedRequests);
             }
         }
     };
     
-
 
     return (
         <DashboardCard
@@ -379,6 +312,9 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                             <TableCell>
                                 <Typography variant="subtitle2" fontWeight={600}>Date</Typography>
                             </TableCell>
+                            <TableCell>
+                                <Typography variant="subtitle2" fontWeight={600}>Assign to</Typography>
+                            </TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -396,7 +332,7 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                                 </TableCell>
                                 <TableCell>
                                     <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
-                                        {request.CourseCategory}
+                                        Course Category
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
@@ -416,7 +352,7 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                                     <Chip
                                         sx={{
                                             bgcolor:
-                                                request.Status === 'To-do'
+                                                request.Status === 'Submitted'
                                                 ? (theme) => theme.palette.error.light
                                                 : request.Status === 'In progress'
                                                 ? (theme) => theme.palette.warning.light
@@ -426,7 +362,7 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                                                 ? (theme) => theme.palette.error.light
                                                 : (theme) => theme.palette.secondary.light,
                                             color:    
-                                                request.Status === 'To-do'
+                                                request.Status === 'Submitted'
                                                 ? (theme) => theme.palette.error.main
                                                 : request.Status === 'In progress'
                                                 ? (theme) => theme.palette.warning.main
