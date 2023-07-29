@@ -4,7 +4,7 @@ import DashboardCard from "../../../src/components/shared/DashboardCard"
 import { Key, ReactElement, JSXElementConstructor, ReactFragment, ReactPortal, useState, useEffect } from "react";
 import { Router, useRouter } from "next/router";
 import { auth, db } from "../../../config/firebase";
-import { DocumentReference, Timestamp, collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { DocumentData, DocumentReference, QuerySnapshot, Timestamp, collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import CustomNextPage from "../../../types/custom";
 import FullLayout from "../../../src/layouts/full/FullLayout";
 import withRole from "../../../src/components/hocs/withRole";
@@ -33,6 +33,7 @@ interface RequestDisplayType {
 
 const FacultyDashboard: CustomNextPage = () => {
     const [requests, setRequests] = useState<RequestDisplayType[]>([]);
+    const [requestsCopy, setRequestsCopy] = useState<RequestDisplayType[]>([]);
     const [userID, setUserID] = useState<string | undefined>();
         const router = useRouter();
         
@@ -106,6 +107,7 @@ const FacultyDashboard: CustomNextPage = () => {
             }
 
             setRequests(fetchedRequests);
+            setRequestsCopy(fetchedRequests);
         };
   
         fetchRequests();
@@ -118,58 +120,152 @@ const FacultyDashboard: CustomNextPage = () => {
         type: string;
     }
 
+    console.log("Requests:", requests);
+
     const handleSelect = async (value: Filter | null) => {
-        console.log(value)
-        // Define a query against the 'collectionName' collection where 'field' equals the selected value
+
+        console.log(value);
+        let querySnapshot: QuerySnapshot<DocumentData> | undefined;
+    
         if (value !== null) {
-            console.log('inside')
-            if (value.type == 'category') {
-                const category = value.value;
-                console.log(category)
-                // Query 'Syllabi' collection to get the document IDs that have the desired 'category'
-                let syllabiSnapshot = await getDocs(query(collection(db, 'Syllabi'), where('CourseCategory', '==', category)));
-                let syllabiIds = syllabiSnapshot.docs.map(doc => doc.id);
-
-                // Query 'Requests' collection
-                let requestsSnapshot = await getDocs(collection(db, 'Requests'));
-
-                let relevantRequests = requestsSnapshot.docs.filter(doc => {
-                    // Assuming the 'syllabi' field in the 'Requests' document is a reference to a 'Syllabi' document
-                    let syllabiRef = doc.data().ExternalSyllabus;
-                    if (syllabiRef) {
-                        // Extract the ID from the reference (the path will be something like 'Syllabi/id')
-                        let syllabiId = syllabiRef.path.split('/')[1];
-                        return syllabiIds.includes(syllabiId);
+            if (value.value === null) {
+                const fetchRequests = async () => {
+                    const currentUser = auth.currentUser;
+                    let userId = null;
+        
+                    if (currentUser !== null) {
+                        const email = currentUser.email;
+                        const q = query(collection(db, 'Users'), where('Email', '==', email));
+                        const querySnapshot = await getDocs(q);
+        
+                        if (!querySnapshot.empty) {
+                            const userDoc = querySnapshot.docs[0];
+                            userId = userDoc.id;
+                            setUserID(userId);
+                            console.log(userId)
+                        }
                     }
-                    return false;
-                });
-                // Handle the relevant requests
-                relevantRequests.forEach((doc) => {
-                    // doc.data() is never undefined for query doc snapshots
-                    console.log(doc.id, " => ", doc.data());
-                });
+        
+                    const requestsCollection = collection(db, 'Requests');
+        
+                    const querySnapshot = await getDocs(
+                        query(requestsCollection, where('Reviewer', '==', userId))
+                    );
+        
+                    const fetchedRequests: RequestDisplayType[] = [];
+        
+                    for (const doc of querySnapshot.docs) {
+                        const requestData = doc.data() as RequestType;
+        
+                        // Convert the 'Date' object to a readable format
+                        const timestamp = requestData.Date as unknown as Timestamp;
+                        const date = timestamp.toDate().toLocaleDateString();
+        
+                        // Fetch the ExternalSyllabus document
+                        const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
+                        console.log(requestData.ExternalSyllabus.path);
+                        const externalSyllabusPath = requestData.ExternalSyllabus.path;
+                        const syllabusName = syllabusSnapshot.data()?.CourseName;
+                        const syllabusCategory = syllabusSnapshot.data()?.CourseCategory;
+        
+                        // Fetch the Requester document
+                        const requesterSnapshot = await getDoc(requestData.Requester);
+                        const requesterData = requesterSnapshot.data()?.Name;
+        
+                        fetchedRequests.push({
+                            id: doc.id,
+                            Requester: requesterData,
+                            ExternalSyllabus: syllabusName,
+                            CourseCategory: syllabusCategory,
+                            ExternalSyllabusPath: externalSyllabusPath,
+                            Status: requestData.Status,
+                            Date: date,
+                        });
+                    }
+        
+                    setRequests(fetchedRequests);
+                    setRequestsCopy(fetchedRequests);
+                };
+            
+                fetchRequests();
             }
-            else if (value.type == 'review-status') {
-                console.log('inside inside')
-                const q = query(collection(db, 'Requests'), where('Status', '==', value.value));
-                console.log(q)
-                const querySnapshot = await getDocs(q);
-                console.log(querySnapshot)
-                querySnapshot.forEach((doc) => {
-                    // doc.data() is never undefined for query doc snapshots
-                    console.log(doc.id, " => ", doc.data());
+            if (value.type === 'category') {
+                const newRequests: RequestDisplayType[] = [];
+
+                requests.forEach((request) => {
+                    if (request.CourseCategory === value.value) {
+                        newRequests.push(request);
+                    }
                 });
+
+                setRequests(newRequests);
             }
-            else if (value.type == 'reviewer') {
-                const q = query(collection(db, 'Requests'), where('Reviewer', '==', value.type));
-                const querySnapshot = await getDocs(q);
-                querySnapshot.forEach((doc) => {
-                    // doc.data() is never undefined for query doc snapshots
-                    console.log(doc.id, " => ", doc.data());
+            else if (value.type === 'review-status') {
+                const newRequests: RequestDisplayType[] = [];
+
+                requests.forEach((request) => {
+                    if (request.Status === value.value) {
+                        newRequests.push(request);
+                    }
                 });
+
+                setRequests(newRequests);
+            }
+            else if (value.type === 'date') {
+                if (value.value !== null) {
+                    let noOfDays: number = parseInt(value.value[5]);
+                    if (!Number.isNaN(parseInt(value.value[6]))) {
+                        noOfDays *= 10;
+                        noOfDays += parseInt(value.value[6]);
+                    }
+                    let date = new Date();
+                    date.setDate(date.getDate() - noOfDays);
+
+                    console.log(date.toLocaleDateString());
+
+                    const newRequests: RequestDisplayType[] = [];
+
+                    requests.forEach((request) => {
+                        if (request.Date >= date.toLocaleDateString()) {
+                            newRequests.push(request);
+                        }
+                    });
+
+                    setRequests(newRequests); 
+                }
+            }
+    
+            if (querySnapshot) {
+                const fetchedRequests: RequestDisplayType[] = [];
+    
+                for (const doc of querySnapshot.docs) {
+                    const requestData = doc.data() as RequestType;
+                    const timestamp = requestData.Date as unknown as Timestamp;
+                    const date = timestamp.toDate().toLocaleDateString();
+    
+                    const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
+                    const externalSyllabusPath = requestData.ExternalSyllabus.path;
+                    const syllabusName = syllabusSnapshot.data()?.CourseName;
+                    const syllabusCategory = syllabusSnapshot.data()?.CourseCategory;
+    
+                    const requesterSnapshot = await getDoc(requestData.Requester);
+                    const requesterData = requesterSnapshot.data()?.Name;
+    
+                    fetchedRequests.push({
+                        id: doc.id,
+                        Requester: requesterData,
+                        ExternalSyllabus: syllabusName,
+                        CourseCategory: syllabusCategory,
+                        ExternalSyllabusPath: externalSyllabusPath,
+                        Status: requestData.Status,
+                        Date: date,
+                    });
+                }
+                setRequests(fetchedRequests);
             }
         }
     };
+    
 
     return (
         <>       

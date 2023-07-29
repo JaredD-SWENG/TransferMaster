@@ -1,5 +1,5 @@
 import { ReactElement, useEffect, useState } from "react";
-import { DocumentReference, collection, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot } from "firebase/firestore";
+import { DocumentReference, collection, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot, QuerySnapshot, DocumentData, DocumentSnapshot } from "firebase/firestore";
 import { db } from "../../../config/firebase";
 import { MenuItem, TableContainer, Table, TableHead, TableRow, TableCell, Typography, TableBody, Stack, Box, Chip, Button, Grid } from "@mui/material";
 import CustomSelect from "../../../src/components/forms/theme-elements/CustomSelect";
@@ -23,6 +23,7 @@ interface Filter {
 interface RequestType {
     id: string;
     Requester: DocumentReference;
+    Reviewer: string;
     ExternalSyllabus: DocumentReference;
     Status: string;
     Date: string;
@@ -31,14 +32,16 @@ interface RequestType {
 interface RequestDisplayType {
     id: string;
     Requester: string;
+    Reviewer: string;
     ExternalSyllabus: string; // name of syllabus should be displayed as a string
+    CourseCategory: string;
     Status: string;
     Date: string;
 }
 
 // Users collection - only reviewers
 interface FacultyType {
-    id: number;
+    id: string;
     name: string;
     department: string;
     syllabus: string[];
@@ -78,15 +81,20 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                     // Fetch the ExternalSyllabus document
                     const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
                     const syllabusData = syllabusSnapshot.data()?.CourseName;
+                    const syllabusCategory = syllabusSnapshot.data()?.CourseCategory;
         
                     // Fetch the Requester document
                     const requesterSnapshot = await getDoc(requestData.Requester);
                     const requesterData = requesterSnapshot.data()?.Name;
+
+                    const reviewerId = requestData.Reviewer;
         
                     fetchedRequests.push({
                         id: doc.id,
                         Requester: requesterData,
+                        Reviewer: reviewerId,
                         ExternalSyllabus: syllabusData,
+                        CourseCategory: syllabusCategory,
                         Status: requestData.Status,
                         Date: date,
                     });
@@ -110,7 +118,7 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                 const userData = doc.data();
                 if (userData.Role === "Faculty") {
                     facultyData.push({
-                        id: userData.id,
+                        id: doc.id,
                         name: userData.Name,
                         department: userData.Department,
                         syllabus: [],
@@ -173,14 +181,166 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
   
 
     console.log("Requests:", requests);
+    console.log(faculty);
 
 
     const [selectedFilter, setSelectedFilter] = useState<Filter | null>(null);
 
 
-    const handleSelect = (value: Filter | null) => {
-        setSelectedFilter(value);
+    const handleSelect = async (value: Filter | null) => {
+
+        console.log(value);
+        let querySnapshot: QuerySnapshot<DocumentData> | undefined;
+    
+        if (value !== null) {
+            if (value.value === null) {
+                const fetchRequests = async () => {
+                    const requestsCollection = collection(db, "Requests");
+                
+                    const unsubscribe = onSnapshot(requestsCollection, (querySnapshot) => {
+                        const fetchedRequests: RequestDisplayType[] = [];
+    
+                        querySnapshot.forEach(async (doc) => {
+                            const requestData = doc.data() as RequestType;
+    
+                            // Convert the 'Date' object to a readable format
+                            const timestamp = requestData.Date as unknown as Timestamp;
+                            const date = timestamp.toDate().toLocaleDateString();
+    
+                            // Fetch the ExternalSyllabus document
+                            const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
+                            const syllabusData = syllabusSnapshot.data()?.CourseName;
+                            const syllabusCategory = syllabusSnapshot.data()?.CourseCategory;
+    
+                            // Fetch the Requester document
+                            const requesterSnapshot = await getDoc(requestData.Requester);
+                            const requesterData = requesterSnapshot.data()?.Name;
+
+                            const reviewerId = requestData.Reviewer;
+                
+                            fetchedRequests.push({
+                                id: doc.id,
+                                Requester: requesterData,
+                                Reviewer: reviewerId,
+                                ExternalSyllabus: syllabusData,
+                                CourseCategory: syllabusCategory,
+                                Status: requestData.Status,
+                                Date: date,
+                            });
+    
+                            setRequests(fetchedRequests);
+                        });
+                    });
+                
+                    // Clean up the listener when the component unmounts
+                    return unsubscribe;
+                };
+            
+                fetchRequests();
+            }
+            if (value.type == 'category') {
+                const newRequests: RequestDisplayType[] = [];
+
+                requests.forEach((request) => {
+                    if (request.CourseCategory === value.value) {
+                        newRequests.push(request);
+                    }
+                });
+
+                setRequests(newRequests);
+            }
+            else if (value.type == 'review-status') {
+                const newRequests: RequestDisplayType[] = [];
+
+                requests.forEach((request) => {
+                    if (request.Status === value.value) {
+                        newRequests.push(request);
+                    }
+                });
+
+                setRequests(newRequests);
+            }
+            else if (value.type == 'faculty') {
+                const newRequests: RequestDisplayType[] = [];
+                let facultyId: string;
+
+                faculty.forEach((facultyMember) => {
+                    if (facultyMember.name === value.value) {
+                        facultyId = facultyMember.id;
+                    }
+                });
+
+                requests.forEach((request) => {
+                    if (request.Reviewer === facultyId) {
+                        newRequests.push(request);
+                    }
+                });
+
+                setRequests(newRequests);
+            }
+            else if (value.type === 'date') {
+                if (value.value !== null) {
+                    let noOfDays: number = parseInt(value.value[5]);
+                    if (parseInt(value.value[6]) !== null) {
+                        noOfDays *= 10;
+                        noOfDays += parseInt(value.value[6]);
+                    }
+                    console.log(noOfDays);
+                    let date = new Date();
+                    date.setDate(date.getDate() - noOfDays);
+
+                    console.log(date.toLocaleDateString());
+
+                    const newRequests: RequestDisplayType[] = [];
+
+                    requests.forEach((request) => {
+                        if (request.Date >= date.toLocaleDateString()) {
+                            newRequests.push(request);
+                        }
+                    });
+
+                    setRequests(newRequests); 
+                }
+            }
+    
+            if (querySnapshot) {
+                const fetchedRequests: RequestDisplayType[] = [];
+    
+                // Change to for...of loop to handle async operation
+                for (const doc of querySnapshot.docs) {
+                    const requestData = doc.data() as RequestType;
+        
+                    // Convert the 'Date' object to a readable format
+                    const timestamp = requestData.Date as unknown as Timestamp;
+                    const date = timestamp.toDate().toLocaleDateString();
+        
+                    // Fetch the ExternalSyllabus document
+                    const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
+                    const syllabusData = syllabusSnapshot.data()?.CourseName;
+                    const syllabusCategory = syllabusSnapshot.data()?.CourseCategory;
+        
+                    // Fetch the Requester document
+                    const requesterSnapshot = await getDoc(requestData.Requester);
+                    const requesterData = requesterSnapshot.data()?.Name;
+
+                    const reviewerId = requestData.Reviewer;
+        
+                    fetchedRequests.push({
+                        id: doc.id,
+                        Requester: requesterData,
+                        Reviewer: reviewerId,
+                        ExternalSyllabus: syllabusData,
+                        CourseCategory: syllabusCategory,
+                        Status: requestData.Status,
+                        Date: date,
+                    });
+                }
+    
+                setRequests(fetchedRequests);
+            }
+        }
     };
+    
 
 
     return (
@@ -236,7 +396,7 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                                 </TableCell>
                                 <TableCell>
                                     <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
-                                        Course Category
+                                        {request.CourseCategory}
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
