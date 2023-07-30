@@ -1,15 +1,14 @@
-import { MenuItem, TableContainer, Table, TableHead, TableRow, TableCell, Typography, TableBody, Stack, Avatar, Chip, Box, Card, Button, Grid } from "@mui/material"
-import CustomSelect from "../../../src/components/forms/theme-elements/CustomSelect"
+import { TableContainer, Table, TableHead, TableRow, TableCell, Typography, TableBody, Stack, Chip, Box, Button, Grid } from "@mui/material"
 import DashboardCard from "../../../src/components/shared/DashboardCard"
-import { Key, ReactElement, JSXElementConstructor, ReactFragment, ReactPortal, useState, useEffect } from "react";
-import { Router, useRouter } from "next/router";
+import { ReactElement, useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import { auth, db } from "../../../config/firebase";
-import { DocumentReference, Timestamp, collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { DocumentData, DocumentReference, QuerySnapshot, Timestamp, collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import CustomNextPage from "../../../types/custom";
 import FullLayout from "../../../src/layouts/full/FullLayout";
 import withRole from "../../../src/components/hocs/withRole";
 import FacultyFilter from "../../filterUI/FacultyFilter";
-import { validateYupSchema } from "formik";
+
 //Requests collection
 interface RequestType {
   id: string;
@@ -31,253 +30,293 @@ interface RequestDisplayType {
 }
 
 const FacultyDashboard: CustomNextPage = () => {
-  const [requests, setRequests] = useState<RequestDisplayType[]>([]);
-  const [userID, setUserID] = useState<string | undefined>();
+    const [requests, setRequests] = useState<RequestDisplayType[]>([]);
+    const [userID, setUserID] = useState<string | undefined>();
     const router = useRouter();
-    
-    const handleClick = (requestID: string, externalSyllabus: string, userID: string | undefined) => {
-      console.log(externalSyllabus);
-      console.log("userID", userID);
-      router.push({
-        pathname: "../../comparison",
-        query: { requestID, externalSyllabus, userID },
         
-      });
+    const handleClick = (requestID: string, externalSyllabus: string, userID: string | undefined) => {
+        console.log(externalSyllabus);
+        console.log("userID", userID);
+        router.push({
+            pathname: "../../comparison",
+            query: { requestID, externalSyllabus, userID },
+        });
     };
 
-    //are we using this?
-    const handleUploadHistoryClick = () => {
-        router.push('../my-uploads')}
+    useEffect(() => {
+        const fetchRequests = async () => {
+            const currentUser = auth.currentUser;
+            let userId = null;
+            if (currentUser !== null) {
+                const email = currentUser.email;
+                const q = query(collection(db, 'Users'), where('Email', '==', email));
+                const querySnapshot = await getDocs(q);
 
-        useEffect(() => {
-          const fetchRequests = async () => {
-              const currentUser = auth.currentUser;
-              let userId = null;
-              if (currentUser !== null) {
-                  const email = currentUser.email;
-                  const q = query(collection(db, 'Users'), where('Email', '==', email));
-                  const querySnapshot = await getDocs(q);
-  
-                  if (!querySnapshot.empty) {
-                      const userDoc = querySnapshot.docs[0];
-                      userId = userDoc.id;
-                      setUserID(userId);
-                      console.log(userId)
-                  }
-              }
-              const requestsCollection = collection(db, 'Requests');
-              const findMe = "/Users/"+userId;
-              console.log("findMe", findMe)
-              const querySnapshot = await getDocs(
-                  query(requestsCollection, where('Reviewer', '==', userId ? doc(db, 'Users', userId) : null ))
-              );
-  
-              const fetchedRequests: RequestDisplayType[] = [];
-  
-              for (const doc of querySnapshot.docs) {
-                  const requestData = doc.data() as RequestType;
-  
-                  // Convert the 'Date' object to a readable format
-                  const timestamp = requestData.Date as unknown as Timestamp;
-                  const date = timestamp.toDate().toLocaleDateString();
-  
-                  // Fetch the ExternalSyllabus document
-                  const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
-                  console.log(requestData.ExternalSyllabus.path);
-                  const externalSyllabusPath = requestData.ExternalSyllabus.path;
-                  const syllabusName = syllabusSnapshot.data()?.CourseName;
-                  const syllabusCategory = syllabusSnapshot.data()?.CourseCategory;
-  
+                if (!querySnapshot.empty) {
+                    const userDoc = querySnapshot.docs[0];
+                    userId = userDoc.id;
+                    setUserID(userId);
+                    console.log(userId)
+                }
+            }
+            const requestsCollection = collection(db, 'Requests');
+            const findMe = "/Users/"+userId;
+            console.log("findMe", findMe)
+            const querySnapshot = await getDocs(
+                query(requestsCollection, where('Reviewer', '==', userId ? doc(db, 'Users', userId) : null ))
+            );
 
+            const fetchedRequests: RequestDisplayType[] = [];
 
-                  // Fetch the Requester document
-                  const requesterSnapshot = await getDoc(requestData.Requester);
-                  const requesterData = requesterSnapshot.data()?.Name;
-  
-                  fetchedRequests.push({
-                      id: doc.id,
-                      Requester: requesterData,
-                      ExternalSyllabus: syllabusName,
-                      CourseCategory: syllabusCategory,
-                      ExternalSyllabusPath: externalSyllabusPath,
-                      Status: requestData.Status,
-                      Date: date,
-                  });
-              }
-  
-              setRequests(fetchedRequests);
-          };
-  
-          fetchRequests();
-      }, []); // <-- Empty dependency array
+            for (const doc of querySnapshot.docs) {
+                const requestData = doc.data() as RequestType;
 
-  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+                // Convert the 'Date' object to a readable format
+                const timestamp = requestData.Date as unknown as Timestamp;
+                const date = timestamp.toDate().toLocaleDateString();
+
+                // Fetch the ExternalSyllabus document
+                const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
+                console.log(requestData.ExternalSyllabus.path);
+                const externalSyllabusPath = requestData.ExternalSyllabus.path;
+                const syllabusName = syllabusSnapshot.data()?.CourseName;
+                const syllabusCategory = syllabusSnapshot.data()?.CourseCategory;
+
+                // Fetch the Requester document
+                const requesterSnapshot = await getDoc(requestData.Requester);
+                const requesterData = requesterSnapshot.data()?.Name;
+
+                fetchedRequests.push({
+                    id: doc.id,
+                    Requester: requesterData,
+                    ExternalSyllabus: syllabusName,
+                    CourseCategory: syllabusCategory,
+                    ExternalSyllabusPath: externalSyllabusPath,
+                    Status: requestData.Status,
+                    Date: date,
+                });
+            }
+
+            setRequests(fetchedRequests);
+        };
+  
+        fetchRequests();
+    }, []); // <-- Empty dependency array
 
     interface Filter {
         value: string | null;
         type: string;
     }
 
+    console.log("Requests:", requests);
+
     const handleSelect = async (value: Filter | null) => {
-        console.log(value)
-        // Define a query against the 'collectionName' collection where 'field' equals the selected value
+        console.log(value);
         if (value !== null) {
-            console.log('inside')
-            if (value.type == 'category') {
-                const category = value.value;
-                console.log(category)
-                // Query 'Syllabi' collection to get the document IDs that have the desired 'category'
-                let syllabiSnapshot = await getDocs(query(collection(db, 'Syllabi'), where('CourseCategory', '==', category)));
-                let syllabiIds = syllabiSnapshot.docs.map(doc => doc.id);
-
-                // Query 'Requests' collection
-                let requestsSnapshot = await getDocs(collection(db, 'Requests'));
-
-                let relevantRequests = requestsSnapshot.docs.filter(doc => {
-                    // Assuming the 'syllabi' field in the 'Requests' document is a reference to a 'Syllabi' document
-                    let syllabiRef = doc.data().ExternalSyllabus;
-                    if (syllabiRef) {
-                        // Extract the ID from the reference (the path will be something like 'Syllabi/id')
-                        let syllabiId = syllabiRef.path.split('/')[1];
-                        return syllabiIds.includes(syllabiId);
+            if (value.value === null) {
+                const fetchRequests = async () => {
+                    const currentUser = auth.currentUser;
+                    let userId = null;
+                    if (currentUser !== null) {
+                        const email = currentUser.email;
+                        const q = query(collection(db, 'Users'), where('Email', '==', email));
+                        const querySnapshot = await getDocs(q);
+        
+                        if (!querySnapshot.empty) {
+                            const userDoc = querySnapshot.docs[0];
+                            userId = userDoc.id;
+                            setUserID(userId);
+                            console.log(userId)
+                        }
                     }
-                    return false;
-                });
-                // Handle the relevant requests
-                relevantRequests.forEach((doc) => {
-                    // doc.data() is never undefined for query doc snapshots
-                    console.log(doc.id, " => ", doc.data());
-                });
+                    const requestsCollection = collection(db, 'Requests');
+                    const findMe = "/Users/"+userId;
+                    console.log("findMe", findMe)
+                    const querySnapshot = await getDocs(
+                        query(requestsCollection, where('Reviewer', '==', userId ? doc(db, 'Users', userId) : null ))
+                    );
+        
+                    const fetchedRequests: RequestDisplayType[] = [];
+        
+                    for (const doc of querySnapshot.docs) {
+                        const requestData = doc.data() as RequestType;
+        
+                        // Convert the 'Date' object to a readable format
+                        const timestamp = requestData.Date as unknown as Timestamp;
+                        const date = timestamp.toDate().toLocaleDateString();
+        
+                        // Fetch the ExternalSyllabus document
+                        const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
+                        console.log(requestData.ExternalSyllabus.path);
+                        const externalSyllabusPath = requestData.ExternalSyllabus.path;
+                        const syllabusName = syllabusSnapshot.data()?.CourseName;
+                        const syllabusCategory = syllabusSnapshot.data()?.CourseCategory;
+        
+                        // Fetch the Requester document
+                        const requesterSnapshot = await getDoc(requestData.Requester);
+                        const requesterData = requesterSnapshot.data()?.Name;
+        
+                        fetchedRequests.push({
+                            id: doc.id,
+                            Requester: requesterData,
+                            ExternalSyllabus: syllabusName,
+                            CourseCategory: syllabusCategory,
+                            ExternalSyllabusPath: externalSyllabusPath,
+                            Status: requestData.Status,
+                            Date: date,
+                        });
+                    }
+        
+                    setRequests(fetchedRequests);
+                };
+          
+                fetchRequests();
             }
-            else if (value.type == 'review-status') {
-                console.log('inside inside')
-                const q = query(collection(db, 'Requests'), where('Status', '==', value.value));
-                console.log(q)
-                const querySnapshot = await getDocs(q);
-                console.log(querySnapshot)
-                querySnapshot.forEach((doc) => {
-                    // doc.data() is never undefined for query doc snapshots
-                    console.log(doc.id, " => ", doc.data());
-                });
-            }
-            else if (value.type == 'reviewer') {
-                const q = query(collection(db, 'Requests'), where('Reviewer', '==', value.type));
-                const querySnapshot = await getDocs(q);
-                querySnapshot.forEach((doc) => {
-                    // doc.data() is never undefined for query doc snapshots
-                    console.log(doc.id, " => ", doc.data());
-                });
+            else {
+                if (value.type == 'category') {
+                    const newRequests: RequestDisplayType[] = [];
+                    requests.forEach((request) => {
+                        if (request.CourseCategory === value.value) {
+                            newRequests.push(request);
+                        }
+                    });
+                    setRequests(newRequests);
+                }
+                else if (value.type === 'review-status') {
+                    const newRequests: RequestDisplayType[] = [];
+                    requests.forEach((request) => {
+                        if (request.Status === value.value) {
+                            newRequests.push(request);
+                        }
+                    });
+                    setRequests(newRequests);
+                }
+                else if (value.type === 'date') {
+                    let noOfDays: number = parseInt(value.value[5]);
+                    if (!Number.isNaN(parseInt(value.value[6]))) {
+                        noOfDays *= 10;
+                        noOfDays += parseInt(value.value[6]);
+                    }
+                    let date = new Date();
+                    date.setDate(date.getDate() - noOfDays);
+                    console.log(date.toLocaleDateString());
+                    const newRequests: RequestDisplayType[] = [];
+                    requests.forEach((request) => {
+                        if (request.Date >= date.toLocaleDateString()) {
+                            newRequests.push(request);
+                        }
+                    });
+                    setRequests(newRequests); 
+                }
             }
         }
     };
+
     return (
-      
         <>       
-        <Grid >
+            <Grid >
                 <FacultyFilter onSelect={handleSelect}/>
             </Grid>
-        <DashboardCard
-            title="Requests"       
-        >
-            <TableContainer>
-                <Table
-                    aria-label="simple table"
-                    sx={{
-                        whiteSpace: 'nowrap',
-                    }}
-                >
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>
-                                <Typography variant="subtitle2" fontWeight={600}>Requested by</Typography>
-                            </TableCell>
-                            <TableCell>
-                                <Typography variant="subtitle2" fontWeight={600}>Syllabus</Typography>
-                            </TableCell>
-                            <TableCell>
-                                <Typography variant="subtitle2" fontWeight={600}>Course Category</Typography>
-                            </TableCell>
-                            
-                            <TableCell>
-                                <Typography variant="subtitle2" fontWeight={600}>Status</Typography>
-                            </TableCell>
-                            <TableCell>
-                                <Typography variant="subtitle2" fontWeight={600}>Date</Typography>
-                            </TableCell>
-                            <TableCell>
-                                <Typography variant="subtitle2" fontWeight={600}>Actions</Typography>
-                            </TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {requests.map((request: { id: any; Requester: any; ExternalSyllabus: any; CourseCategory: string; Status: string; Date: any; ExternalSyllabusPath: string; }) => (
-                            <TableRow key={request.id}>
+            <DashboardCard
+                title="Requests"       
+            >
+                <TableContainer>
+                    <Table
+                        aria-label="simple table"
+                        sx={{
+                            whiteSpace: 'nowrap',
+                        }}
+                    >
+                        <TableHead>
+                            <TableRow>
                                 <TableCell>
-                                    <Stack direction="row" spacing={2}>
-                                        <Box>
-                                            <Typography variant="subtitle2" fontWeight={600}>
-                                                {request.Requester}
-                                            </Typography>
-                                        </Box>
-                                    </Stack>
+                                    <Typography variant="subtitle2" fontWeight={600}>Requested by</Typography>
                                 </TableCell>
                                 <TableCell>
-                                    <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
-                                        {request.ExternalSyllabus}
-                                    </Typography>
-                                </TableCell>
-                               
-                                <TableCell>
-                                    <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
-                                    {request.CourseCategory}
-                                    </Typography>
-                                </TableCell>
-
-                                <TableCell>
-                                    <Chip
-                                        sx={{
-                                            bgcolor:
-                                                request.Status === 'To-do'
-                                                    ? (theme) => theme.palette.error.light
-                                                    : request.Status === 'In progress'
-                                                        ? (theme) => theme.palette.warning.light
-                                                        : request.Status === 'Approved'
-                                                            ? (theme) => theme.palette.success.light
-                                                            : request.Status === 'Rejected'
-                                                                ? (theme) => theme.palette.error.light
-                                                                : (theme) => theme.palette.secondary.light,
-                                            color:
-                                                request.Status === 'To-do'
-                                                    ? (theme) => theme.palette.error.main
-                                                    : request.Status === 'In progress'
-                                                        ? (theme) => theme.palette.warning.main
-                                                        : request.Status === 'Approved'
-                                                            ? (theme) => theme.palette.success.main
-                                                            : request.Status === 'Rejected'
-                                                                ? (theme) => theme.palette.error.main
-                                                                : (theme) => theme.palette.secondary.main,
-                                            borderRadius: '8px',
-                                        }}
-                                        size="small"
-                                        label={request.Status}
-                                    />
+                                    <Typography variant="subtitle2" fontWeight={600}>Syllabus</Typography>
                                 </TableCell>
                                 <TableCell>
-                                    <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
-                                        {request.Date}
-                                    </Typography>
+                                    <Typography variant="subtitle2" fontWeight={600}>Course Category</Typography>
                                 </TableCell>
                                 <TableCell>
-                                    <Button variant="outlined" onClick={() => handleClick(request.id, request.ExternalSyllabusPath, userID)}>
-                                        Review
-                                    </Button>
+                                    <Typography variant="subtitle2" fontWeight={600}>Status</Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="subtitle2" fontWeight={600}>Date</Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="subtitle2" fontWeight={600}>Actions</Typography>
                                 </TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-        </DashboardCard></>
+                        </TableHead>
+                        <TableBody>
+                            {requests.map((request: { id: any; Requester: any; ExternalSyllabus: any; CourseCategory: string; Status: string; Date: any; ExternalSyllabusPath: string; }) => (
+                                <TableRow key={request.id}>
+                                    <TableCell>
+                                        <Stack direction="row" spacing={2}>
+                                            <Box>
+                                                <Typography variant="subtitle2" fontWeight={600}>
+                                                    {request.Requester}
+                                                </Typography>
+                                            </Box>
+                                        </Stack>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
+                                            {request.ExternalSyllabus}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
+                                            {request.CourseCategory}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip
+                                            sx={{
+                                                bgcolor:
+                                                    request.Status === 'Submitted'
+                                                    ? (theme) => theme.palette.error.light
+                                                    : request.Status === 'In progress'
+                                                    ? (theme) => theme.palette.warning.light
+                                                    : request.Status === 'Approved'
+                                                    ? (theme) => theme.palette.success.light
+                                                    : request.Status === 'Rejected'
+                                                    ? (theme) => theme.palette.error.light
+                                                    : (theme) => theme.palette.secondary.light,
+                                                color:
+                                                    request.Status === 'Submitted'
+                                                    ? (theme) => theme.palette.error.main
+                                                    : request.Status === 'In progress'
+                                                    ? (theme) => theme.palette.warning.main
+                                                    : request.Status === 'Approved'
+                                                    ? (theme) => theme.palette.success.main
+                                                    : request.Status === 'Rejected'
+                                                    ? (theme) => theme.palette.error.main
+                                                    : (theme) => theme.palette.secondary.main,
+                                                borderRadius: '8px',
+                                            }}
+                                            size="small"
+                                            label={request.Status}
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
+                                            {request.Date}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button variant="outlined" onClick={() => handleClick(request.id, request.ExternalSyllabusPath, userID)}>
+                                            Review
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </DashboardCard>
+        </>
     );
 };
 

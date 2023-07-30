@@ -3,7 +3,7 @@ import { Typography } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 import CustomTextField from '../forms/theme-elements/CustomTextField';
 
-const option1 = ['Submitted', 'Approved', 'Rejected'];
+const statuses = ['Submitted', 'In Progress', 'Approved', 'Rejected'];
 
 interface Filter {
     value: string | null;
@@ -15,7 +15,7 @@ interface ReviewStatusProps {
 }
 
 const ReviewStatus: React.FC<ReviewStatusProps> = ({ onSelect }) => {
-    const [value, setValue] = React.useState<string | null>(option1[0]);
+    const [value, setValue] = React.useState<string | null>(statuses[0]);
     const [inputValue, setInputValue] = React.useState('');
 
     const handleChange = (event: React.SyntheticEvent<Element, Event>, value: string | null) => {
@@ -28,7 +28,7 @@ const ReviewStatus: React.FC<ReviewStatusProps> = ({ onSelect }) => {
             <Autocomplete
                 disablePortal
                 id="combo-box-demo"
-                options={option1}
+                options={statuses}
                 fullWidth
                 renderInput={(params) => (
                     <CustomTextField {...params} placeholder="Review status" aria-label="Review status" />
