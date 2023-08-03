@@ -190,11 +190,11 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
     }
 
 	for(let i = 0; i < 3; i++) {
-		if(maindata[i] <= 35)
+		if(maindata[i] <= 0.35)
 			maincolors[i] = low
-		else if(maindata[i] > 35 && maindata[i] <= 80)
+		else if(maindata[i] > 0.35 && maindata[i] <= 0.80)
 			maincolors[i] = medium
-		else if(maindata[i] > 80)
+		else if(maindata[i] > 0.80)
 			maincolors[i] = high
 	}
 
