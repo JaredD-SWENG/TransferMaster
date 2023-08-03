@@ -168,13 +168,14 @@ const PsuUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
 
         let fileData = new Uint8Array();
         let bytes = new ArrayBuffer(0);
+        console.log("ocrCheck.isSelectable", ocrCheck.isSelectable)
         //IF NOT SELECTABLE
-        if (!ocrCheck.isSelectable){
+        if (ocrCheck.isSelectable == false){
           setIsSectable(ocrCheck.isSelectable);
           setOCRContent(ocrCheck.fileContent);
           let encoder = new TextEncoder();
           fileData = encoder.encode(ocrCheck.fileContent);
-          console.log("fileData",  fileData);
+          console.log("is NOT SELECTABLE fileData",  fileData);
             
         }else{
           const fileBytes = await file.arrayBuffer();
@@ -185,7 +186,7 @@ const PsuUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
           // Convert the ArrayBuffer to a Uint8Array for sending as binary data in the API request
           fileData = new Uint8Array(bytes);
     
-          console.log("filedata", fileData);
+          console.log("is SELECTABLE filedata", fileData);
          }
 
        
@@ -303,6 +304,8 @@ const PsuUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
               SyllabusURL: doc(db, 'SyllabiURL', docRef.id),
               Textbook: textbookValue,
               Objectives: learningObjectivesValue,
+              IsSelectable: ocrCheck.isSelectable,
+              OCRContent: ocrCheck.fileContent,
             }
 
             const syllabiRef = await addDoc(collection(db, 'Syllabi'), syllabiDoc);
@@ -359,6 +362,7 @@ const PsuUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
         console.error('Error loading PDF:', error);
       });
     }else{
+      console.log("ocrCheck.isSelectable", ocrCheck.isSelectable);
       const fullText = ocrCheck.fileContent;
 
       const user = auth.currentUser;
@@ -625,6 +629,10 @@ const handleOkClick = async () => {
         const syllabusURLRef = data.SyllabusURL;
 
         const OCRContent = data.OCRContent;
+        const IsSelectable = data.IsSelectable; 
+
+        console.log(IsSelectable);
+        
         
         const syllabusURLDocSnapshot = await getDoc(syllabusURLRef);
         if(syllabusURLDocSnapshot.exists()){
@@ -636,8 +644,11 @@ const handleOkClick = async () => {
           const fileRef = ref(storage, storageFileURL);
         
           const downloadUrl = await getDownloadURL(fileRef);
+
+          console.log("data.IsSelectable", data.IsSelectable)
           
-          if(data.isSelectable){
+          if(data.IsSelectable == true){
+            console.log("data.IsSelectable", data.IsSelectable)
           const fileBytes = await getBytes(fileRef);
           // Load the PDF document from the bytes
           const loadingTask = getDocument({ data: fileBytes });

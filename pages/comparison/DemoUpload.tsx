@@ -140,6 +140,7 @@ const DemoUpload: React.FC<UploadPopupProps> = ({ onExtractedData, userID }) => 
           const userDoc = querySnapshot.docs[0];
           const userData = userDoc.data();
           const myUploads = userData.MyUploads || [];
+          console.log(myUploads);
           setMyUploads(myUploads);
         
       }
@@ -215,8 +216,10 @@ const DemoUpload: React.FC<UploadPopupProps> = ({ onExtractedData, userID }) => 
   
     //MyUploads code--------------------------------------------------------------
     const getCourseNameFromDocument = async (documentRef: any) => {
+      console.log("docRef" + documentRef);
       const firestoreRef = doc(db, 'Syllabi', documentRef);
       const docSnapshot = await getDoc(firestoreRef);
+      console.log("docSnapshot" + docSnapshot);
       if (docSnapshot.exists()) {
         const docData = docSnapshot.data() as { CourseName: string } | undefined;
         return docData?.CourseName || '';
@@ -229,6 +232,7 @@ const DemoUpload: React.FC<UploadPopupProps> = ({ onExtractedData, userID }) => 
     useEffect(() => {
       const fetchCourseNames = async () => {
         const names = await Promise.all(myUploads.map(getCourseNameFromDocument));
+        console.log(names);
         setCourseNames(names);
       };
     
