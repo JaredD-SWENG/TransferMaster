@@ -170,12 +170,12 @@ const ExtUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
          let fileData = new Uint8Array();
          let bytes = new ArrayBuffer(0);
          //IF NOT SELECTABLE
-         if (!ocrCheck.isSelectable){
+         if (ocrCheck.isSelectable == false){
            setIsSectable(ocrCheck.isSelectable);
            setOCRContent(ocrCheck.fileContent);
            let encoder = new TextEncoder();
            fileData = encoder.encode(ocrCheck.fileContent);
-           console.log("fileData",  fileData);
+           console.log("IS NOT SELECTABLE fileData",  fileData);
              
          }else{
           const fileBytes = await file.arrayBuffer();
@@ -186,7 +186,7 @@ const ExtUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
           // Convert the ArrayBuffer to a Uint8Array for sending as binary data in the API request
           fileData = new Uint8Array(bytes);
     
-          console.log("filedata", fileData);
+          console.log("IS SELECTABLE filedata", fileData);
          }
 
        
@@ -306,6 +306,8 @@ const ExtUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
               SyllabusURL: doc(db, 'SyllabiURL', docRef.id),
               Textbook: textbookValue,
               Objectives: learningObjectivesValue,
+              IsSelectable: ocrCheck.isSelectable,
+              OCRContent: ocrCheck.fileContent,
             }
 
             const syllabiRef = await addDoc(collection(db, 'Syllabi'), syllabiDoc);
@@ -569,7 +571,9 @@ const ExtUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
     //MyUploads code--------------------------------------------------------------
     const getCourseNameFromDocument = async (documentRef: any) => {
       const firestoreRef = doc(db, 'Syllabi', documentRef);
+      console.log("docRef", documentRef);
       const docSnapshot = await getDoc(firestoreRef);
+      console.log("docSnapshot" + docSnapshot);
       if (docSnapshot.exists()) {
         const docData = docSnapshot.data() as { CourseName: string } | undefined;
         return docData?.CourseName || '';
@@ -582,6 +586,7 @@ const ExtUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
     useEffect(() => {
       const fetchCourseNames = async () => {
         const names = await Promise.all(myUploads.map(getCourseNameFromDocument));
+        console.log(names);
         setCourseNames(names);
       };
     
@@ -628,6 +633,11 @@ const handleOkClick = async () => {
         const syllabusURLRef = data.SyllabusURL;
 
         const OCRContent = data.OCRContent;
+
+        const IsSelectable = data.IsSelectable; 
+
+        console.log(IsSelectable);
+        
         
         const syllabusURLDocSnapshot = await getDoc(syllabusURLRef);
         if(syllabusURLDocSnapshot.exists()){
@@ -639,7 +649,10 @@ const handleOkClick = async () => {
           const fileRef = ref(storage, storageFileURL);
           const downloadUrl = await getDownloadURL(fileRef);
 
-          if(data.isSelectable){
+          console.log("data.isSelectable", data.IsSelectable);
+
+          if(data.IsSelectable == true){
+            console.log("data.isSelectable", data.IsSelectable);
             const fileBytes = await getBytes(fileRef);
 
           

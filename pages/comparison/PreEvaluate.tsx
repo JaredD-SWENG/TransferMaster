@@ -521,6 +521,7 @@ const PreEvaluate: React.FC<SyllabusProps> = ({ course, credits, textbook, learn
                     </DialogActions>
                 </Dialog>
             </Grid>
+            {/* Approve/Reject button should be disabled for students: could try passing in the role and disable the button if role==student*/}
             {!isLoading && showResult && (
                 <Result syllabusComponents={syllabusComponents} psuUrl={psuDownloadUrl} extUrl={extDownloadUrl} />
             )}

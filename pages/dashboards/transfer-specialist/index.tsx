@@ -383,6 +383,11 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
+                                    <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
+                                        {assignedTo}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
                                     <Button variant="outlined" onClick={() => viewMoreDetails(request.id)} >
                                         View Details
                                     </Button>
