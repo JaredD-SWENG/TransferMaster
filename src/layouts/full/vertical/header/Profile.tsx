@@ -17,12 +17,15 @@ import { getAuth, signOut } from "firebase/auth";
 import { auth, db } from '../../../../../config/firebase';
 import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import { setUserId } from 'firebase/analytics';
+import { useRouter } from 'next/router';
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
   const [name, setName] = useState<string>('');
   const [role, setRole] = useState<string>('');
   const [email, setEmail] = useState<string | null>('');
+  const [hRef, sethRef] = useState<string>('');
+  const router = useRouter();
   const handleClick2 = (event: any) => {
     setAnchorEl2(event.currentTarget);
   };
@@ -48,6 +51,7 @@ const Profile = () => {
           userName = userData.Name;
           setName(userName);
           userRole = userData.Role;
+          
       }
         console.log(userName);
       }
@@ -62,6 +66,7 @@ const Profile = () => {
     signOut(auth).then(() => {
       // Sign-out successful.
       console.log("Logged out");
+      router.push('/auth/auth1/login');
     }).catch((error) => {
       // An error happened.
       console.log("Error logging out");
@@ -187,9 +192,9 @@ const Profile = () => {
         ))}
         <Box mt={2}>
           
-          <Button onClick={handleLogout}href="/auth/auth1/login" variant="outlined" color="primary" component={Link} fullWidth>
-            Logout
-          </Button>
+        <Button onClick={handleLogout} variant="outlined" color="primary" fullWidth>
+          Logout
+        </Button>
         </Box>
       </Menu>
     </Box>
