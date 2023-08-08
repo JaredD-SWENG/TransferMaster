@@ -18,7 +18,7 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
     const [mainClickedBarValue, setMainClickedBarValue] = useState<number | null>(null);
     const [loClickedBarValue, setLoClickedBarValue] = useState<number | null>(null); 
 
-  // chart
+  	// chart
     const maincolumnchart: any = {
         chart: {
             type: 'bar',

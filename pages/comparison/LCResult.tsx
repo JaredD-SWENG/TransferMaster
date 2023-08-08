@@ -23,7 +23,7 @@ interface ResultProps {
     showButtons: boolean, 
 }
 
-const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusComponents, psuUrl, extUrl, showButtons}) => {
+const LCResult: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusComponents, psuUrl, extUrl, showButtons}) => {
     const [status, setStatus] = useState('');
     const [open, setOpen] = useState(false);
     const [message, setMessage] = useState('');
@@ -52,7 +52,7 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusCo
         setChatHistory((prevHistory) => [...prevHistory, msg]);
     };
     
-    const DynamicBarChart = dynamic(() => import('./BarChart'), { ssr: false });
+    const DynamicBarChart = dynamic(() => import('./LCBarChart'), { ssr: false });
     const router = useRouter();
     const requestID = router.query.requestID as string;
 
@@ -90,7 +90,7 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusCo
                 psuURL: psuUrl,
                 extURL: extUrl,
                 question: inputQuestion,
-                usingResume: false
+                usingResume: true
             }, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -186,4 +186,4 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusCo
     );
 };
 
-export default Result;
+export default LCResult;

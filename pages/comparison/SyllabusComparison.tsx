@@ -15,7 +15,7 @@ import {
 import ParentCard from "../../src/components/shared/ParentCard";
 import PageContainer from "../../src/components/container/PageContainer";
 import CustomFormLabel from "../../src/components/forms/theme-elements/CustomFormLabel";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import CustomRangeSlider from "../../src/components/forms/theme-elements/CustomRangeSlider";
 import { getDoc, DocumentData, doc, DocumentReference, query, collection, where, getDocs } from "firebase/firestore";
@@ -36,6 +36,7 @@ import {
 } from '@mui/material';
 import { useSelector, AppState } from '../../src/store/Store';
 import { styled } from '@mui/material/styles';
+import HoverButton from "../ui-components/HoverButton";
 
 const CustomLinearProgress = styled(LinearProgress)(({ theme }) => ({
     height: 10, // Adjust the height to make the loading bar thicker
@@ -236,18 +237,33 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
         fetchData();
     }, []);
 
+    const cancelTokenRef = useRef<{} | null>(null);
+
     useEffect(() => {
         if (isLoading) {
-          const simulateProgress = async () => {
-            for (let i = 1; i <= 100; i += 1) {
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-              setLoadingProgress(i);
-            }
-            setLoadingProgress(100);
-          };
-          simulateProgress();
+            const token = {};  // Create a unique cancellation token
+            cancelTokenRef.current = token;
+
+            const simulateProgress = async () => {
+                for (let i = 1; i <= 100; i += 1) {
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+                    // If the token has been cancelled, exit the simulation
+                    if (cancelTokenRef.current !== token) return;
+
+                    setLoadingProgress(i);
+                }
+                setLoadingProgress(100);
+            };
+
+            simulateProgress();
+
+            // Return a cleanup function to cancel the simulation
+            return () => {
+                cancelTokenRef.current = null;
+            };
         }
-      }, [isLoading]);
+    }, [isLoading]);
 
     const handleCompare = () => {
         const sum = sliderValues.reduce((a, b) => a + b, 0);
@@ -419,6 +435,15 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
     return (
         <PageContainer>
             <h1>Syllabus Comparison</h1>
+            <Grid item xs={12}>
+            {/* Move the HoverButton component here */}
+            <HoverButton instructions="This is the Syllabus Comparison Page to review a submitted request.
+                You can see the external syllabus uploaded by the student on the right side.
+                You can upload an equivalent PSU syllabus on the left side.
+                Adjust the slider values according to parameter weightings. 
+                Click on Compare to begin the evaluation"
+            />
+        </Grid>        
             <Grid container spacing={3} mt={3}>
                 <Grid item xs={12} lg={6}>
                     <ParentCardUpload title="Penn State">

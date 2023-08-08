@@ -39,6 +39,7 @@ import { ReactElement, useEffect, useState } from 'react';
 import CustomNextPage from '../../../types/custom';
 import FullLayout from '../../../src/layouts/full/FullLayout';
 import withRole from '../../../src/components/hocs/withRole';
+import HoverButton from "../../ui-components/HoverButton";
 
 interface TablePaginationActionsProps {
   count: number;
@@ -185,17 +186,20 @@ const StudentDashboard: CustomNextPage = () => {
   return (
     <>
     <Grid item xs={12} mt={3} mb={3}>
+       {/* Use the HoverButton component here */}
+       <HoverButton instructions="This is the dashboard for Student.
+        You can submit a new transfer request as well as monitor the status of submitted requests." />
     <Button variant="contained" color="primary" onClick={handleSubmit}>Submit new Request</Button>
     </Grid>
     <DashboardCard
       title="Requests"
-      action={
-        <CustomSelect labelId="month-dd" id="month-dd" size="small">
-          <MenuItem value={1}>March 2023</MenuItem>
-          <MenuItem value={2}>April 2023</MenuItem>
-          <MenuItem value={3}>May 2023</MenuItem>
-        </CustomSelect>
-      }
+      // action={
+      //   <CustomSelect labelId="month-dd" id="month-dd" size="small">
+      //     <MenuItem value={1}>March 2023</MenuItem>
+      //     <MenuItem value={2}>April 2023</MenuItem>
+      //     <MenuItem value={3}>May 2023</MenuItem>
+      //   </CustomSelect>
+      // }
     >
       <TableContainer>
         <Table aria-label="simple table" sx={{ whiteSpace: 'nowrap' }}>

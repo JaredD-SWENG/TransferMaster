@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { DocumentReference, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../config/firebase'; // Replace with the actual path to your Firebase configuration
+import HoverButton from '../../ui-components/HoverButton';
 
 interface SyllabusDoc {
   InstitutionName: string;
@@ -134,6 +135,9 @@ const RequestDetails = () => {
   }, [router.query]);
 
   return (
+    <>
+     {/* Use the HoverButton component here */}
+     <HoverButton instructions="This page displays all the details associated with the selected request." />
     <div>
       <h1>Request Details</h1>
   
@@ -202,6 +206,7 @@ const RequestDetails = () => {
         <b>Comments:</b> {comments}
       </p>
     </div>
+    </>
   );
   
   

@@ -97,9 +97,17 @@ const Menuitems: MenuitemsType[] = [
   },
   {
     id: uniqueId(),
+    title: 'Life Credits',
+    icon: IconAward,
+    chip: 'New',
+    chipColor: 'secondary',
+    href: '/comparison/LifeCredits',
+  },
+  {
+    id: uniqueId(),
     title: 'Course Matcher',
     icon: IconApps,
-    chip: 'New',
+    chip: 'Soon',
     chipColor: 'secondary',
     href: '/comparison/CourseMatch',
   },
