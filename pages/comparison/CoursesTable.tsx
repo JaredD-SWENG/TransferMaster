@@ -16,7 +16,7 @@ const CoursesTable: React.FC<CoursesTableProps> = ({ courses }) => {
           </tr>
         </thead>
         <tbody>
-          {courses.map((course, index) => (
+          {courses && courses.map((course, index) => (
             <tr key={index}>
               <td>{course}</td>
               {/* Render other course data in the same row if needed */}
