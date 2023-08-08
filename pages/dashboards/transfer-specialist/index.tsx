@@ -10,6 +10,7 @@ import FullLayout from "../../../src/layouts/full/FullLayout";
 import withRole from "../../../src/components/hocs/withRole";
 import { useRouter } from "next/router";
 import TCSFilter from "../../filterUI/TSCFilter";
+import HoverButton from "../../ui-components/HoverButton";
 
 interface Filter {
     value: string | null;
@@ -306,6 +307,12 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
     
 
     return (
+        <>
+        <Grid item xs={12} mt={3} mb={3}>
+        {/* Use the HoverButton component here */}
+        <HoverButton instructions="This is the dashboard for Transfer Credit Specialists.
+        You can see details for a specific request, as well as assign a faculty member to review it." />
+      </Grid>
         <DashboardCard
             title="Requests"
             action={
@@ -428,8 +435,10 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                 </Table>
             </TableContainer>
         </DashboardCard>
+        </>
     );
 };
+
 
 TransferSpecialistDashboard.getLayout = function getLayout(page: ReactElement) {
     return <FullLayout>{page}</FullLayout>;

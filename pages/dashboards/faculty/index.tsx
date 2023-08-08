@@ -8,6 +8,7 @@ import CustomNextPage from "../../../types/custom";
 import FullLayout from "../../../src/layouts/full/FullLayout";
 import withRole from "../../../src/components/hocs/withRole";
 import FacultyFilter from "../../filterUI/FacultyFilter";
+import HoverButton from "../../ui-components/HoverButton";
 
 //Requests collection
 interface RequestType {
@@ -213,7 +214,10 @@ const FacultyDashboard: CustomNextPage = () => {
     };
 
     return (
-        <>       
+        <> 
+         {/* Use the HoverButton component here */}
+       <HoverButton instructions="This is the dashboard for Faculty.
+        You can see and review all requests that have been assigned to you." />   
             <Grid >
                 <FacultyFilter onSelect={handleSelect}/>
             </Grid>

@@ -79,6 +79,12 @@ const profile: ProfileType[] = [
   },
   {
     href: "/comparison/CourseMatch",
+    title: "Life Credits",
+    subtitle: "Compare Resume with Syllabus",
+    icon: "/images/svgs/icon-connect.svg",
+  },
+  {
+    href: "/comparison/CourseMatch",
     title: "Course Matcher",
     subtitle: "Find Potential Course Matches",
     icon: "/images/svgs/icon-tasks.svg",

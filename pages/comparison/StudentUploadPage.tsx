@@ -21,6 +21,7 @@ import CustomNextPage from '../../types/custom';
 import Head from 'next/head';
 import { getDocument, GlobalWorkerOptions} from 'pdfjs-dist';
 GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.7.107/pdf.worker.min.js';
+import HoverButton from "../ui-components/HoverButton";
 
 async function callOCRCheck(fileURL:string) {
   console.log("file url: " + fileURL);
@@ -401,6 +402,14 @@ useEffect(() => {
       {/* ------------------------------------------------------------------------------------------------ */}
       <Grid container>
         {/* 1 */}
+        <Grid item xs={12} mt={3}>
+           {/* Use the HoverButton component here */}
+       <HoverButton instructions="Submit a new transfer request here. 
+        Start by uploading a syllabus.
+        Our tool will extract the relevant fields.
+        Make any corrections if required.
+        Make sure all fields are entered beore you submit." />
+        </Grid>
         <Grid item xs={12} mt={3}>
           <Input type="file" style={{ display: 'none' }} id="file-upload" onChange={handleFileSelect} />
           <label htmlFor="file-upload">

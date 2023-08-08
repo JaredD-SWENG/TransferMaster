@@ -4,6 +4,8 @@ interface CoursesTableProps {
   courses: string[];
 }
 
+
+
 const CoursesTable: React.FC<CoursesTableProps> = ({ courses }) => {
   return (
     <div className="courses-table">
@@ -47,6 +49,10 @@ const CoursesTable: React.FC<CoursesTableProps> = ({ courses }) => {
       `}</style>
     </div>
   );
+};
+
+CoursesTable.defaultProps = {
+  courses: ["Empty"],
 };
 
 export default CoursesTable;
