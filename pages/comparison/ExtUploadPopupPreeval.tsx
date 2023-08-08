@@ -240,7 +240,7 @@ const ExtUploadPopupPreeval: React.FC<UploadPopupProps> = ({ onExtractedData, us
         setLearningObjectivesValue(learningObjectivesValue);
       
 
-        if(ocrCheck.isSelectable){ // Load the PDF document from the bytes
+        if(ocrCheck.isSelectable == true){ // Load the PDF document from the bytes
         // Load the PDF document from the bytes
        const loadingTask = getDocument({ data: bytes });
        console.log('loadingTask:', loadingTask);
@@ -657,9 +657,9 @@ const handleOkClick = async () => {
 
           
           
-          // Load the PDF document from the bytes
-          const loadingTask = getDocument({ data: fileBytes });
-          console.log('loadingTask:', loadingTask);
+            // Load the PDF document from the bytes
+            const loadingTask = getDocument({ data: fileBytes });
+            console.log('loadingTask:', loadingTask);
     
           loadingTask.promise
             .then(async (pdf: { numPages: number; getPage: (arg0: number) => any }) => {

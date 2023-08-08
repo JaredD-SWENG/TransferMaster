@@ -73,15 +73,10 @@ const LandingPage = () => {
                                     }}
                                     >
                                         <Typography variant="h5" fontWeight={300}>
-                                        We understand the hurdles faced by transfer students and higher education institutions 
-                                        when it comes to evaluating transfer credits. That's why we've developed an AI-powered assistive tool 
-                                        that streamlines the transfer credit evaluation process. TransferMaster leverages AI to extract key
-                                         data from syllabi, compares them to determine course equivalency, and provides comprehensive 
-                                         analysis reports. With TransferMaster, students can easily upload their external syllabi and 
-                                         receive timely updates on their transfer requests. Faculty reviewers can make data-driven 
-                                         decisions using our AI comparison tool. Our solution reduces delays, financial 
-                                         burdens, frustration, and stress, while providing students with access to resources for informed 
-                                         decisions. Join us in simplifying the transfer credit process with TransferMaster!
+                                        We've created TransferMaster, an AI tool that simplifies transfer credit evaluation. 
+                                        It extracts data from syllabi, finds course equivalencies, and generates analysis reports. 
+                                        Students upload syllabi for quick updates, while faculty use AI for data-driven decisions. 
+                                        Say goodbye to delays, costs, and stress—join us in streamlining transfer credits with TransferMaster!
                                         </Typography>
                                     </motion.div>
                                 </Box>

@@ -92,11 +92,17 @@ const Menuitems: MenuitemsType[] = [
     id: uniqueId(),
     title: 'Pre-Evaluate',
     icon: IconFiles,
-    chip: 'New',
     chipColor: 'secondary',
     href: '/comparison/PreEvaluate',
   },
-
+  {
+    id: uniqueId(),
+    title: 'Course Matcher',
+    icon: IconApps,
+    chip: 'New',
+    chipColor: 'secondary',
+    href: '/comparison/CourseMatch',
+  },
   // {
   //   id: uniqueId(),
   //   title: 'Blog',

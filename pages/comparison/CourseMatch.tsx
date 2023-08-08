@@ -15,11 +15,12 @@ import { ChangeEvent, ReactElement, SetStateAction, useEffect, useState } from '
 import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import axios from 'axios';
 import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-import withRole from '../../src/components/hocs/withRole';
 import FullLayout from '../../src/layouts/full/FullLayout';
 import CustomNextPage from '../../types/custom';
 import Head from 'next/head';
 import { getDocument, GlobalWorkerOptions} from 'pdfjs-dist';
+import withRole from '../../src/components/hocs/withRole';
+import CoursesTable from './CoursesTable';
 GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.7.107/pdf.worker.min.js';
 
 async function callOCRCheck(fileURL:string) {
@@ -43,7 +44,30 @@ async function callOCRCheck(fileURL:string) {
     return "Error calling";
   }
 }
-const StudentUploadPage: CustomNextPage = () => {
+
+async function callCSVFunc(fullText:string) {
+    console.log("full text sending to csv: " + fullText);
+    try {
+        const response = await axios.post('https://64dctbfpypozkldozv3yvcdr740jwqyh.lambda-url.us-east-1.on.aws/', {
+            FullText: fullText
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        console.log(response.data)
+        const data = response.data
+        return data;
+  
+       
+      
+    } catch (error) {
+      console.error(`Error calling lambda function: ${error}`);
+      return "Error calling";
+    }
+  }
+
+const CourseMatch: CustomNextPage = () => {
 
   //OS Parser API call 
   async function parse_doc(data: any) {
@@ -55,7 +79,6 @@ const StudentUploadPage: CustomNextPage = () => {
     });
     return response.data;
   }
-  
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [documentId, setDocumentId] = useState<string | null>(null);
   const [institutionValue, setInstitutionValue] = useState<string>('');
@@ -73,6 +96,10 @@ const StudentUploadPage: CustomNextPage = () => {
   const [userID, setUserID] = useState<string>('');
   const [fileData, setFileData] = useState<Uint8Array>();
   const [fileBytes, setFileBytes] = useState<ArrayBuffer>();
+  const [courses, setCourses]= useState<string[]>([]);
+  const [foolText, setFullText] = useState<string>('');
+  const [showTable, setShowTable] = useState(false);
+  
 
   const router = useRouter();
 
@@ -81,6 +108,7 @@ const StudentUploadPage: CustomNextPage = () => {
     
   };
   //File selection 
+
   const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
     setSelectedFile(file);
@@ -99,11 +127,13 @@ const StudentUploadPage: CustomNextPage = () => {
        const ocrCheck = await callOCRCheck(downloadUrl);
 
        let fileData = new Uint8Array();
+       let bytes = new ArrayBuffer(0);
        if (ocrCheck.isSelectable == false){
          setIsSectable(ocrCheck.isSelectable);
          setOCRContent(ocrCheck.fileContent);
          let encoder = new TextEncoder();
          fileData = encoder.encode(ocrCheck.fileContent);
+         
          console.log("IS NOT SELECTABLE fileData",  fileData);
          
          //convert to bytes
@@ -111,13 +141,13 @@ const StudentUploadPage: CustomNextPage = () => {
        else{
         // Read the file as an ArrayBuffer
         const fileBytes = await file.arrayBuffer();
-        setFileBytes(fileBytes);
+        bytes = fileBytes;
   
         console.log("filebytes", fileBytes);
         // Convert the ArrayBuffer to a Uint8Array for sending as binary data in the API request
         fileData = new Uint8Array(fileBytes);
   
-        console.log("IS SELECTABLE fileData",  fileData);
+        console.log("IS SELECTABLE filedata", fileData);
         
        }
 
@@ -130,42 +160,42 @@ const StudentUploadPage: CustomNextPage = () => {
         const { field, extracted_sections, institution } = apiResponse.data;
         const courseNameHolder = extracted_sections.code;
         const creditsHolder = extracted_sections.credits;
-        const institutionName = institution ? institution.name : '';
-        const textbook = extracted_sections.required_reading;
-        const learningObjectives = extracted_sections.learning_outcomes;
         const courseCategoryName = field.name;
+        // const institutionName = institution ? institution.name : '';
+        // const textbook = extracted_sections.required_reading;
+        // const learningObjectives = extracted_sections.learning_outcomes;
 
         // Initialize the relevant variables
         let courseNameValue = '';
-        let institutionValue = '';
+        // let institutionValue = '';
         let creditsValue = '';
-        let textbookValue = '';
-        let learningObjectivesValue: string[] = [];
         let courseCategoryValue = '';
+        // let textbookValue = '';
+        // let learningObjectivesValue: string[] = [];
 
         if (courseNameHolder && courseNameHolder.length > 0) {
           courseNameValue = courseNameHolder[0].text;
         }
   
-        if (institutionName) {
-          institutionValue = institutionName;
-        }
+        // if (institutionName) {
+        //   institutionValue = institutionName;
+        // }
   
         if (creditsHolder && creditsHolder.length > 0) {
           creditsValue = creditsHolder[0].text;
         }
 
-        if(textbook && textbook.length > 0){
-          textbookValue = textbook[0].text;
-        }
-        
-        if (learningObjectives && learningObjectives.length > 0) {
-          learningObjectivesValue = learningObjectives.map((outcome: { text: string; }) => outcome.text);
-        }
-
         if (courseCategoryName) {
           courseCategoryValue = courseCategoryName;
         }
+
+        // if(textbook && textbook.length > 0){
+        //   textbookValue = textbook[0].text;
+        // }
+        
+        // if (learningObjectives && learningObjectives.length > 0) {
+        //   learningObjectivesValue = learningObjectives.map((outcome: { text: string; }) => outcome.text);
+        // }
   
         // Update the institutionValue state to display in the CustomFormLabel
         setInstitutionValue(institutionValue);
@@ -175,57 +205,58 @@ const StudentUploadPage: CustomNextPage = () => {
         setCreditsValue(creditsValue);
         setTextBookValue(textbookValue);
         setLearningObjectivesValue(learningObjectivesValue);
-        setCourseCategoryValue(courseCategoryValue)
+        setCourseCategoryValue(courseCategoryValue);
        // Only proceed with the following code if ocrCheck.isSelectable is true
-       console.log("ocrCheck.isSelectable" + ocrCheck.isSelectable);
-        if (ocrCheck.isSelectable) {
+        if (ocrCheck.isSelectable == true) {
           console.log("filebytes inside the if(ocrCheck.isSelectable)", fileBytes);
           // Load the PDF document from the bytes
-          const loadingTask = getDocument({ data: fileBytes });
-          console.log('loadingTask:', loadingTask);
-  
-          loadingTask.promise
-            .then(async (pdf: { numPages: number; getPage: (arg0: number) => any }) => {
-              console.log('Promise resolved. PDF:', pdf);
-              let fullText = '';
-  
-              // Loop through each page and extract text
-              for (let i = 1; i <= Math.min(5, pdf.numPages); i++) {
-                const page = await pdf.getPage(i);
-  
-                // Extract the text content
-                const content = await page.getTextContent();
-  
-                // Combine the text items into a single string
-                const text = content.items.map((item: { str: any }) => item.str).join(' ');
-  
-                fullText += text + '\n';
-              }
-  
-              
-  
-             
-            })
-            .catch((error: any) => {
-              console.error('Error loading PDF:', error);
-            });
+          const pdf = await getDocument({ data: bytes }).promise;
+          console.log('PDF:', pdf);
+          let fullText = '';
+
+           // Loop through each page and extract text
+      for (let i = 1; i <= Math.min(5, pdf.numPages); i++) {
+        const page = await pdf.getPage(i);
+
+        // Extract the text content
+        const content = await page.getTextContent();
+
+        // Combine the text items into a single string
+        const text = content.items.map((item) => {
+          if ('str' in item) {
+            // Handle the TextItem type
+            return item.str;
+          } else {
+            // Handle the TextMarkedContent type (e.g., for marked content)
+            return '';
+          }
+        }).join(' ');
+
+        fullText += text + '\n';
+      }
+      console.log("INSIDE HANDLE FILE SELECT" + fullText);
+      let csvResponse = await callCSVFunc(fullText);
+      setCourses(csvResponse);
+      //setCourses(["CHEM 130: Introduction to General, Organic, and Biochemistry", "CHEM 140: General Chemistry I", "CHEM 141: General Chemistry II", "CHEM 150: General Chemistry I for Engineering Students", "CHEM 151: General Chemistry II for Engineering Students"])
+
+           
         }
   
       } catch (error) {
         console.error('Failed to parse document:', error);
       }
     }
-  }; // Add this closing bracket
+  }; 
+
   
   
   const checkFormCompletion = () => {
     if (
-      institutionValue &&
+      
       courseNameValue &&
       creditsValue &&
       courseCategoryValue &&
-      termTypeValue &&
-      gradeValue &&
+      
       selectedFile
     ) {
       setIsFormComplete(true);
@@ -237,6 +268,10 @@ const StudentUploadPage: CustomNextPage = () => {
 
  //File upload to firebase   
 const handleSubmit = async () => {
+ 
+  
+  
+  
 
   const user = auth.currentUser;
   let userId = null;
@@ -300,25 +335,7 @@ const handleSubmit = async () => {
           console.log("Created MyUploads[] and added the syllabus ref to it")
         }
 
-       //Create and store a request in /Requests (once the syllabus is uploaded )
-      const requestDoc = {
-        Comments: null,
-        Date: serverTimestamp(),
-        ExternalSyllabus: doc(db, 'Syllabi', syllabiRef.id),
-        Grade: gradeValue,
-        PSUSyllabus: null,
-        Requester: userId ? doc(db, "Users", userId) : null,
-        Reviewer: null, 
-        Status: 'Submitted'
-      };
-
-      const requestRef = doc(collection(db, 'Requests')); // Generate a new document reference that can be passed as a URL parameter to another page 
-      await setDoc(requestRef, requestDoc);
-      console.log('Request data stored successfully!');
-
-     
-
-
+      
 
     } catch (error) {
       console.error('Failed to upload file:', error);
@@ -326,72 +343,23 @@ const handleSubmit = async () => {
   } else {
     console.error('No file selected!');
   }
+  setShowTable(true);
 
-  router.push('../../dashboards/student'); //once they submit request, take student back to dashboard
+  
 };
+
+
 
 useEffect(() => {
   checkFormCompletion();
 }, [
-  institutionValue,
   courseNameValue,
   creditsValue,
   courseCategoryValue,
-  termTypeValue,
-  gradeValue,
   selectedFile,
 ]);
 
-useEffect(() => {
-  const fetchDocumentUrl = async () => {
-    if (documentId) {
-      const docSnapshot = await getDoc(doc(db, 'syllabiURL', documentId));
-      if (docSnapshot.exists()) {
-        const { fileUrl } = docSnapshot.data();
-        const downloadUrl = await getDownloadURL(ref(storage, fileUrl));
-        console.log('File URL:', downloadUrl);
 
-         // Fetch the bytes of the PDF file
-         const fileRef = ref(storage, fileUrl);
-         const fileBytes = await getBytes(fileRef);
-         console.log('File Bytes:', fileBytes);
-
-           
-   
-         /**To use getBytes() you have to set up CORS configuration in Google cloud
-          * gsutil cors get gs://transfermaster-a871b.appspot.com
-[{"maxAgeSeconds": 3600, "method": ["GET"], "origin": ["*"], "responseHeader": ["Content-Type"]}]
-          */
-          // Load the PDF document from the bytes
-          const loadingTask = getDocument({data: fileBytes});
-          loadingTask.promise.then(async (pdf: { numPages: number; getPage: (arg0: number) => any; }) => {
-              let fullText = "";
-
-              // Loop through each page and extract text
-              for(let i = 1; i <= Math.min(5, pdf.numPages); i++) {
-                  const page = await pdf.getPage(i);
-
-                  // Extract the text content
-                  const content = await page.getTextContent();
-
-                  // Combine the text items into a single string
-                  const text = content.items.map((item: { str: any; }) => item.str).join(' ');
-
-                  fullText += text + "\n";
-              }
-
-              console.log('PDF Text:', fullText);
-          });
-
-      
-      
-      
-      }
-    }
-  };
-
-  fetchDocumentUrl();
-}, [documentId]);
 
 
   return (
@@ -418,19 +386,6 @@ useEffect(() => {
             </Typography>
           )}
         </Grid>
-
-
-      
-      
-        {/* 2 */}
-        <Grid item xs={12} display="flex" alignItems="center" sx={{ mt: 3 }}>
-        <CustomFormLabel htmlFor="institution" sx={{ mt: 0 }}>
-        Institution Name
-        </CustomFormLabel>
-        </Grid>
-      <Grid item xs={12}>
-      <CustomTextField id="bl-institution" placeholder="Hotel transylvannia State" fullWidth value={institutionValue} onChange={(event: { target: { value: SetStateAction<string>; }; }) => setInstitutionValue(event.target.value)} />
-    </Grid>
         {/* 3 */}
         <Grid item xs={12} display="flex" alignItems="center" sx={{ mt: 3 }}>
           <CustomFormLabel htmlFor="code" sx={{ mt: 0 }}>
@@ -447,16 +402,7 @@ useEffect(() => {
           </CustomFormLabel>
         </Grid>
         <Grid item xs={12}>
-          <CustomTextField id="bl-credit" placeholder="3" fullWidth value={creditsValue} onChange={(event: { target: { value: SetStateAction<string>; }; }) => setCreditsValue(event.target.value)} />
-        </Grid>
-        {/* 5 */}
-        <Grid item xs={12} display="flex" alignItems="center">
-          <CustomFormLabel htmlFor="bl-grade">
-            Grade
-          </CustomFormLabel>
-        </Grid>
-        <Grid item xs={12}>
-          <CustomTextField id="bl-grade" placeholder="A" fullWidth value={gradeValue} onChange={(event: { target: { value: SetStateAction<string>; }; }) => setGradeValue(event.target.value)} />
+          <CustomTextField id="bl-credit" placeholder="ex. 3" fullWidth value={creditsValue} onChange={(event: { target: { value: SetStateAction<string>; }; }) => setCreditsValue(event.target.value)} />
         </Grid>
         {/* 6 */}
         <Grid item xs={12} display="flex" alignItems="center">
@@ -465,23 +411,8 @@ useEffect(() => {
           </CustomFormLabel>
         </Grid>
         <Grid item xs={12}>
-          <CustomTextField id="bl-category" placeholder="Biology" fullWidth value={courseCategoryValue} onChange={(event: { target: { value: SetStateAction<string>; }; }) => setCourseCategoryValue(event.target.value)} />
+          <CustomTextField id="bl-category" placeholder="ex. Biology" fullWidth value={courseCategoryValue} onChange={(event: { target: { value: SetStateAction<string>; }; }) => setCourseCategoryValue(event.target.value)} />
         </Grid>
-        {/* 7 */}
-        <Grid item xs={12} display="flex" alignItems="center">
-          <CustomFormLabel htmlFor="bl-type">
-            Term Type
-          </CustomFormLabel>
-        </Grid>
-        <Grid item xs={12}>
-        <ComboBoxAutocomplete
-            value={termTypeValue}
-            setValue={handleTermChange}
-            options={['Semester', 'Quarter']}
-            placeholder="Select Term Type"
-          />
-        </Grid>
-        {/* 8 */}
        
        
         
@@ -490,11 +421,11 @@ useEffect(() => {
         <Button
   variant="contained"
   color="primary"
-  disabled={!isFormComplete}
   onClick={handleSubmit}
 >
-  Submit
+  Find Courses
 </Button>
+{showTable &&<CoursesTable courses={courses} />}
         </Grid>
       </Grid>
       <Head>
@@ -504,8 +435,8 @@ useEffect(() => {
   );
 };
 
-StudentUploadPage.getLayout = function getLayout(page: ReactElement) {
+CourseMatch.getLayout = function getLayout(page: ReactElement) {
     return <FullLayout>{page}</FullLayout>;
 };
 
-export default withRole({ Component: StudentUploadPage, roles: ['Student'] });
+export default withRole({ Component: CourseMatch, roles: ['Student', 'Transfer Specialist', 'Faculty'] });

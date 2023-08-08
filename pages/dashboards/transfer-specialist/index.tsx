@@ -86,9 +86,24 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                     const requesterSnapshot = await getDoc(requestData.Requester);
                     const requesterData = requesterSnapshot.data()?.Name;
 
-                    const reviewerSnapshot = await getDoc(requestData.Reviewer);
-                    const reviewerData = reviewerSnapshot.data()?.Name;
-                    setAssignedTo(reviewerData);
+                    let reviewerData = '';
+                    
+                    if (requestData.Reviewer) {
+                        try {
+                            const reviewerSnapshot = await getDoc(requestData.Reviewer);
+                            reviewerData = reviewerSnapshot.exists() ? reviewerSnapshot.data()?.Name || '' : '';
+                        } catch (error) {
+                            console.error('Error retrieving reviewer data:', error);
+                            // Handle the error, e.g., set some default value for reviewerData
+                            reviewerData = 'Error retrieving reviewer';
+                        }
+                        setAssignedTo(reviewerData);
+                    } else {
+                        console.log("Reviewer hasnt been assigned yet");
+                        reviewerData = "Unassigned"
+                        setAssignedTo("Unassigned");
+                      }
+        
         
                     fetchedRequests.push({
                         id: doc.id,
@@ -142,7 +157,7 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
         const reviewerName = event.target.value as string;
         const usersCollection = collection(db, "Users");
         const querySnapshot = await getDocs(query(usersCollection, where("Name", "==", reviewerName)));
-
+        //setAssignedTo(reviewerName);
         setSelectedFaculty({
             ...selectedFaculty,
             [requestId]: reviewerName,
@@ -201,10 +216,24 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                             // Fetch the Requester document
                             const requesterSnapshot = await getDoc(requestData.Requester);
                             const requesterData = requesterSnapshot.data()?.Name;
+
+                            let reviewerData = '';
         
-                            const reviewerSnapshot = await getDoc(requestData.Reviewer);
-                            const reviewerData = reviewerSnapshot.data()?.Name;
-                            setAssignedTo(reviewerData);
+                            if (requestData.Reviewer) {
+                                try {
+                                    const reviewerSnapshot = await getDoc(requestData.Reviewer);
+                                    reviewerData = reviewerSnapshot.exists() ? reviewerSnapshot.data()?.Name || '' : '';
+                                } catch (error) {
+                                    console.error('Error retrieving reviewer data:', error);
+                                    // Handle the error, e.g., set some default value for reviewerData
+                                    reviewerData = 'Error retrieving reviewer';
+                                }
+                                setAssignedTo(reviewerData);
+                            } else {
+                                console.log("Reviewer hasn't been assigned yet");
+                                 reviewerData = "Unassigned"
+                                setAssignedTo("Unassigned");
+                              }
                 
                             fetchedRequests.push({
                                 id: doc.id,
@@ -304,7 +333,7 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                                 <Typography variant="subtitle2" fontWeight={600}>Course Category</Typography>
                             </TableCell>
                             <TableCell>
-                                <Typography variant="subtitle2" fontWeight={600}>Assigned</Typography>
+                                <Typography variant="subtitle2" fontWeight={600}>Assigned To</Typography>
                             </TableCell>
                             <TableCell>
                                 <Typography variant="subtitle2" fontWeight={600}>Status</Typography>
@@ -313,7 +342,7 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                                 <Typography variant="subtitle2" fontWeight={600}>Date</Typography>
                             </TableCell>
                             <TableCell>
-                                <Typography variant="subtitle2" fontWeight={600}>Assign to</Typography>
+                                <Typography variant="subtitle2" fontWeight={600}>Assign </Typography>
                             </TableCell>
                         </TableRow>
                     </TableHead>
@@ -336,18 +365,11 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
-                                    <CustomSelect
-                                        value={selectedFaculty[request.id] || ''}
-                                        onChange={handleAssign(request.id)}
-                                        size="small"
-                                    >
-                                        {faculty.map((facultyMember) => (
-                                            <MenuItem key={facultyMember.id} value={facultyMember.name}>
-                                                {facultyMember.name}
-                                            </MenuItem>
-                                        ))}
-                                    </CustomSelect>
+                                    <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
+                                        {request.Reviewer}
+                                    </Typography>
                                 </TableCell>
+                                
                                 <TableCell>
                                     <Chip
                                         sx={{
@@ -383,9 +405,17 @@ const TransferSpecialistDashboard: CustomNextPage = () => {
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
-                                    <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
-                                        {assignedTo}
-                                    </Typography>
+                                    <CustomSelect
+                                        value={selectedFaculty[request.id] || ''}
+                                        onChange={handleAssign(request.id)}
+                                        size="small"
+                                    >
+                                        {faculty.map((facultyMember) => (
+                                            <MenuItem key={facultyMember.id} value={facultyMember.name}>
+                                                {facultyMember.name}
+                                            </MenuItem>
+                                        ))}
+                                    </CustomSelect>
                                 </TableCell>
                                 <TableCell>
                                     <Button variant="outlined" onClick={() => viewMoreDetails(request.id)} >

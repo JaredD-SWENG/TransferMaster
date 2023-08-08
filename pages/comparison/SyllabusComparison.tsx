@@ -18,8 +18,8 @@ import CustomFormLabel from "../../src/components/forms/theme-elements/CustomFor
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import CustomRangeSlider from "../../src/components/forms/theme-elements/CustomRangeSlider";
-import { getDoc, DocumentData, doc, DocumentReference } from "firebase/firestore";
-import { db, storage } from "../../config/firebase";
+import { getDoc, DocumentData, doc, DocumentReference, query, collection, where, getDocs } from "firebase/firestore";
+import { auth, db, storage } from "../../config/firebase";
 import UploadPopup from "./UploadPopup";
 import { ref, getBytes, getDownloadURL } from "firebase/storage";
 import { getDocument, GlobalWorkerOptions} from 'pdfjs-dist';
@@ -136,6 +136,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
     
 
     const [loadingProgress, setLoadingProgress] = useState(0);
+    const[showButtons, setShowButtons] = useState(true);
 
     //const [learningObjectivePercentages, setLearningObjectivePercentages] = useState<number[] | null>(null);
 
@@ -152,9 +153,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
 
     const [isLoading, setIsLoading] = useState(false);
 
-    //const [data, setData] = useState<any>('');
     let data: any;
-    //const [percentages, setPercentages] = useState<number[]>([0, 0, 0]);
 
     async function callLambdaFunction() {
         setIsLoading(true);
@@ -174,10 +173,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
             console.log(response)
             data = response.data;
             console.log("Response from GPT:", data);
-    
-            //const percentages = data.percentages;
-            //const temp = percentages.map((s: string) => parseFloat(s)*100);
-            //setPercentages(
+
             learningObjectivePercentages = data.learning_objectives_percentages.map((value: number) => value * 100);
             setSyllabusComponents({
                 score: data.final_score,
@@ -209,7 +205,36 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
             console.error(`Error calling lambda function: ${error}`);
         }
         setIsLoading(false);
+        setShowCompare(true);
     }
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const user = auth.currentUser;
+            let userId = null; 
+    
+            if (user) {
+                const email = user.email;
+                const q = query(collection(db, "Users"), where("Email", "==", email));
+                const querySnapshot = await getDocs(q);
+    
+                if (!querySnapshot.empty) {
+                    const userDoc = querySnapshot.docs[0];
+                    
+                    const userData = userDoc.data();
+                    if(userData.Role === "Student"){
+                        setShowButtons(false);
+                    }else{
+                        setShowButtons(true);
+                    }
+                  }
+            }
+    
+            
+        };
+        
+        fetchData();
+    }, []);
 
     useEffect(() => {
         if (isLoading) {
@@ -230,11 +255,6 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
             setOpen(true);
         } else {
             callLambdaFunction();
-            // setDisplayText('Comparison successful!');
-            // router.push({
-            //     pathname: 'comparison/Result',
-            //     query: { sliderValues: JSON.stringify(sliderValues), requestID }
-            //   }); 
             
             console.log(syllabusComponents);
             setShowCompare(false);
@@ -462,10 +482,10 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                         </Button>
                     )}
                     {isLoading && (
-      <Box sx={{ width: "100%", mt: 2 }}>
-        <CustomLinearProgress variant="determinate" value={loadingProgress} />
-      </Box>
-    )}
+                        <Box sx={{ width: "100%", mt: 2 }}>
+                            <CustomLinearProgress variant="determinate" value={loadingProgress} />
+                        </Box>
+                    )}
                 </Grid>
                 <Grid item xs={12} display="flex" justifyContent="center" alignItems="center">
                     {displayText && <Card>{displayText}</Card>}
@@ -485,7 +505,7 @@ const SyllabusComparison: React.FC<SyllabusProps> = ({ course, credits, textbook
                 </Dialog>
             </Grid>
             {!isLoading && showResult && (
-                <Result syllabusComponents={syllabusComponents} psuUrl={psuDownloadUrl} extUrl={extDownloadUrl} />
+                <Result syllabusComponents={syllabusComponents} psuUrl={psuDownloadUrl} extUrl={extDownloadUrl} showButtons={showButtons} />
             )}
         </PageContainer>
     );

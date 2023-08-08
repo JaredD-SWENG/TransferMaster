@@ -71,7 +71,8 @@ const LpHeader = () => {
         <ToolbarStyled>
           <Logo />
           <Box flexGrow={1} />
-          {lgDown ? (
+         
+          {/**{lgDown ? (
             <IconButton
               color="inherit"
               aria-label="menu"
@@ -79,7 +80,8 @@ const LpHeader = () => {
             >
               <IconMenu2 size="20" />
             </IconButton>
-          ) : null}
+          ) : null}*/}
+
           {lgUp ? (
             <Stack spacing={1} direction="row" alignItems="center">
               <Navigations />
@@ -87,7 +89,8 @@ const LpHeader = () => {
           ) : null}
         </ToolbarStyled>
       </Container>
-      <Drawer
+     
+     {/**  <Drawer
         anchor="left"
         open={open}
         variant="temporary"
@@ -101,7 +104,8 @@ const LpHeader = () => {
         }}
       >
         <MobileSidebar />
-      </Drawer>
+      </Drawer>*/}
+
     </AppBarStyled>
   );
 };
