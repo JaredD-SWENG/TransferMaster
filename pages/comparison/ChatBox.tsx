@@ -7,7 +7,11 @@ import {
   TextField,
   Box,
   Button,
+  IconButton,
+  Typography,
 } from "@mui/material";
+import { IconX } from "@tabler/icons-react";
+
 
 // Define the custom styles using the CSSProperties type
 const chatStyles: Record<string, React.CSSProperties> = {
@@ -16,7 +20,7 @@ const chatStyles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
   },
   chatBubble: {
-    backgroundColor: "#4caf50",
+    backgroundColor: "#56bdc6",
     color: "#fff",
     maxWidth: "70%",
     padding: "10px 16px",
@@ -26,7 +30,7 @@ const chatStyles: Record<string, React.CSSProperties> = {
   },
   userChatBubble: {
     alignSelf: "flex-start",
-    backgroundColor: "#007bff",
+    backgroundColor: "#6f41b6",
   },
   typingBubble: {
     alignSelf: "flex-start",
@@ -54,6 +58,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 }) => {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
+    null
+  );
 
   useEffect(() => {
     setIsSending(false); // Reset isSending when the chat box is opened again
@@ -73,9 +80,31 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     }
   };
 
+  const handleKeyPress = (event: { key: string; }) => {
+    if (event.key === 'Enter') {
+      handleSendMessage();
+    }
+    };
+    const handleClose = () => {
+      setAnchorEl(null);
+    };
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth>
-      <DialogTitle>Chat with Syllabus</DialogTitle>
+      <Box display="flex" alignItems="center" p={3} pb={0} justifyContent="space-between">
+            <Typography variant="h5" fontWeight={600}>
+              Chat with Syllabus
+            </Typography>
+          <Box>
+            <IconButton
+              onClick={onClose}
+            >
+              <IconX size="1rem" />
+            </IconButton>
+          </Box>
+        </Box>
+      
+
       <DialogContent>
         {/* Render chat messages */}
         <Box sx={chatStyles.chatMessagesContainer} mb={2}>
@@ -104,6 +133,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           variant="outlined"
           value={message}
           onChange={handleChange}
+          onKeyPress={handleKeyPress}
         />
       </DialogContent>
       <Box display="flex" justifyContent="flex-end" p={2}>

@@ -60,12 +60,6 @@ interface ProfileType {
 }
 const profile: ProfileType[] = [
   {
-    href: "/apps/user-profile/profile",
-    title: "My Profile",
-    subtitle: "Account Settings",
-    icon: "/images/svgs/icon-account.svg",
-  },
-  {
     href: "/dashboards/navigator",
     title: "My Dashboard",
     subtitle: "Transfer Credit Evaluation Requests",
@@ -81,6 +75,12 @@ const profile: ProfileType[] = [
     href: "/comparison/PreEvaluate",
     title: "Pre-Evaluate",
     subtitle: "Check Two Syllabi",
+    icon: "/images/svgs/icon-bars.svg",
+  },
+  {
+    href: "/comparison/CourseMatch",
+    title: "Course Matcher",
+    subtitle: "Find Potential Course Matches",
     icon: "/images/svgs/icon-tasks.svg",
   },
 ];

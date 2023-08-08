@@ -103,13 +103,17 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
             value={email}
             onChange={(e: { target: { value: SetStateAction<string>; }; }) => setEmail(e.target.value)}
           />
-          <CustomFormLabel htmlFor="password" >Password</CustomFormLabel>
+         
+         <CustomFormLabel htmlFor="password" >Password</CustomFormLabel>
+          
           <CustomTextField
+           type="password" 
            id="password" 
            variant="outlined"
            fullWidth
            value={password}
-          onChange={(e: { target: { value: SetStateAction<string>; }; }) => setPassword(e.target.value)} />
+          onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setPassword(e.target.value)} />
+          
           <CustomFormLabel htmlFor="role">Role</CustomFormLabel>
           <ComboBoxAutocomplete
             value={role}

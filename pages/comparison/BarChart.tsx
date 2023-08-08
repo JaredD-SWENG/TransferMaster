@@ -66,6 +66,7 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
             labels: {
               show: false,
             },
+			max: 1,
         },
         tooltip: {
             theme: theme.palette.mode === 'dark' ? 'dark' : 'light',
@@ -125,6 +126,7 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
 			labels: {
 				show: false,
 			},
+			max: 1,
 		},
 		tooltip: {
 			theme: theme.palette.mode === 'dark' ? 'dark' : 'light',
@@ -154,9 +156,9 @@ const BarChart: React.FC<BarChartProps> = ({syllabusComponents}: any) => {
     if (learningObjectives && learningObjectives.scores !== undefined) {
         for (let i = 0; i < learningObjectives.scores.length; i++) {
             locategories[i] = 'LO ' + (i + 1);
-            if (learningObjectives.scores[i] < 35)
+            if (learningObjectives.scores[i] < 0.35)
                 locolors[i] = low;
-            else if (learningObjectives.scores[i] > 35 && learningObjectives.scores[i] < 80)
+            else if (learningObjectives.scores[i] > 0.35 && learningObjectives.scores[i] < 0.80)
                 locolors[i] = medium;
             else
                 locolors[i] = high;

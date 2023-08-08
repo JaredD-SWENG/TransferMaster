@@ -20,9 +20,10 @@ interface ResultProps {
     syllabusComponents: any;
     psuUrl: string,
     extUrl: string,
+    showButtons: boolean, 
 }
 
-const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusComponents, psuUrl, extUrl}) => {
+const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusComponents, psuUrl, extUrl, showButtons}) => {
     const [status, setStatus] = useState('');
     const [open, setOpen] = useState(false);
     const [message, setMessage] = useState('');
@@ -52,14 +53,6 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusCo
     };
     
     const DynamicBarChart = dynamic(() => import('./BarChart'), { ssr: false });
-    // const Transition = React.forwardRef(function Transition(
-    //     props: TransitionProps & {
-    //       children: React.ReactElement<any, any>;
-    //     },
-    //     ref: React.Ref<unknown>,
-    // ) {
-    //     return <Slide direction="up" ref={ref} {...props} />;
-    // });
     const router = useRouter();
     const requestID = router.query.requestID as string;
 
@@ -107,8 +100,6 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusCo
             console.log("Response from GPT:", answer);
             return answer;
     
-           
-          
         } catch (error) {
           console.error(`Error calling lambda function: ${error}`);
           return "Error calling";
@@ -120,42 +111,40 @@ const Result: React.FC<ResultProps> & CustomNextPage<ResultProps> = ({syllabusCo
         <PageContainer>
             <h1>Comparison Results</h1>
             <Grid item xs={12} mt={3} display="flex" justifyContent="right" alignItems="center">
-            <Button variant="contained" component="span" onClick={handleOpenChat}>
-        Chat with syllabus
-      </Button>
-
-      {/* Add the ChatBox component */}
-      <ChatBox
-        open={openChat}
-        onClose={handleCloseChat}
-        onSendMessage={handleSendMessage}
-        chatHistory={chatHistory}
-      />
+                <Button variant="contained" component="span" onClick={handleOpenChat}>
+                    Chat with syllabus
+                </Button>
+                <ChatBox
+                    open={openChat}
+                    onClose={handleCloseChat}
+                    onSendMessage={handleSendMessage}
+                    chatHistory={chatHistory}
+                />
             </Grid>
-            {/*</PageContainer>{learningObjectivePercentages && (*/}
-                <Typography mt={6}>
-                    <DynamicBarChart syllabusComponents={syllabusComponents} />
-                </Typography>
-                
-            {/*)}*/}
+            <Typography mt={6}>
+                <DynamicBarChart syllabusComponents={syllabusComponents} />
+            </Typography>
             <Box mt={3}>
                 <Grid item xs={12} lg={16}>
                     <Box display={'flex'} flexDirection={'row'} alignItems={'center'} gap={5}>
                         <Box display={'flex'} justifyContent={'flex-start'} alignItems={'center'} flex={1}>
-                            <Button variant="contained"  color="primary" onClick={handleApproveClickOpen}>
-                                Approve
-                            </Button>
+                            {showButtons && (
+                                <Button variant="contained"  color="primary" onClick={handleApproveClickOpen}>
+                                    Approve
+                                </Button>
+                            )}
                         </Box>
                         <Box display={'flex'} justifyContent={'flex-end'} alignItems={'center'} flex={1}>
-                            <Button variant="contained"  color="error" onClick={handleRejectClickOpen}>
-                                Deny
-                            </Button>
+                            {showButtons && (
+                                <Button variant="contained"  color="error" onClick={handleRejectClickOpen}>
+                                    Deny
+                                </Button>
+                            )}
                         </Box>
                     </Box>
                 </Grid>
                 <Dialog
                     open={open}
-                    // TransitionComponent={Transition}
                     keepMounted
                     onClose={handleClose}
                     fullWidth
