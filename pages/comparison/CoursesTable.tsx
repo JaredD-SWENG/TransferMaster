@@ -1,10 +1,8 @@
-import React from 'react';
+import React from "react";
 
 interface CoursesTableProps {
   courses: string[];
 }
-
-
 
 const CoursesTable: React.FC<CoursesTableProps> = ({ courses }) => {
   return (
@@ -18,12 +16,13 @@ const CoursesTable: React.FC<CoursesTableProps> = ({ courses }) => {
           </tr>
         </thead>
         <tbody>
-          {courses && courses.map((course, index) => (
-            <tr key={index}>
-              <td>{course}</td>
-              {/* Render other course data in the same row if needed */}
-            </tr>
-          ))}
+          {courses &&
+            courses.map((course, index) => (
+              <tr key={index}>
+                <td>{course}</td>
+                {/* Render other course data in the same row if needed */}
+              </tr>
+            ))}
         </tbody>
       </table>
 
@@ -31,13 +30,14 @@ const CoursesTable: React.FC<CoursesTableProps> = ({ courses }) => {
         .courses-table {
           margin-top: 20px;
         }
-        
+
         table {
           width: 100%;
           border-collapse: collapse;
         }
 
-        th, td {
+        th,
+        td {
           padding: 10px;
           border: 1px solid #ccc;
           text-align: left;
