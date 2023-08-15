@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { useTheme } from '@mui/material/styles';
+import * as React from "react";
+import { useTheme } from "@mui/material/styles";
 import {
   Typography,
   TableHead,
@@ -17,35 +17,48 @@ import {
   Button,
   Grid,
   MenuItem,
-} from '@mui/material';
+} from "@mui/material";
 
-import FirstPageIcon from '@mui/icons-material/FirstPage';
-import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
-import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
-import LastPageIcon from '@mui/icons-material/LastPage';
+import FirstPageIcon from "@mui/icons-material/FirstPage";
+import KeyboardArrowLeft from "@mui/icons-material/KeyboardArrowLeft";
+import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight";
+import LastPageIcon from "@mui/icons-material/LastPage";
 
-import Breadcrumb from '../../../src/layouts/full/shared/breadcrumb/Breadcrumb';
-import PageContainer from '../../../src/components/container/PageContainer';
+import Breadcrumb from "../../../src/layouts/full/shared/breadcrumb/Breadcrumb";
+import PageContainer from "../../../src/components/container/PageContainer";
 
-import ParentCard from '../../../src/components/shared/ParentCard';
-import { Stack } from '@mui/system';
-import BlankCard from '../../../src/components/shared/BlankCard';
-import { useRouter } from 'next/router';
-import { DocumentReference, Timestamp, collection, doc, getDoc, getDocs, query, where, onSnapshot } from 'firebase/firestore';
-import { auth, db } from '../../../config/firebase';
-import DashboardCard from '../../../src/components/shared/DashboardCard';
-import CustomSelect from '../../../src/components/forms/theme-elements/CustomSelect';
-import { ReactElement, useEffect, useState } from 'react';
-import CustomNextPage from '../../../types/custom';
-import FullLayout from '../../../src/layouts/full/FullLayout';
-import withRole from '../../../src/components/hocs/withRole';
+import ParentCard from "../../../src/components/shared/ParentCard";
+import { Stack } from "@mui/system";
+import BlankCard from "../../../src/components/shared/BlankCard";
+import { useRouter } from "next/router";
+import {
+  DocumentReference,
+  Timestamp,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  onSnapshot,
+} from "firebase/firestore";
+import { auth, db } from "../../../config/firebase";
+import DashboardCard from "../../../src/components/shared/DashboardCard";
+import CustomSelect from "../../../src/components/forms/theme-elements/CustomSelect";
+import { ReactElement, useEffect, useState } from "react";
+import CustomNextPage from "../../../types/custom";
+import FullLayout from "../../../src/layouts/full/FullLayout";
+import withRole from "../../../src/components/hocs/withRole";
 import HoverButton from "../../ui-components/HoverButton";
 
 interface TablePaginationActionsProps {
   count: number;
   page: number;
   rowsPerPage: number;
-  onPageChange: (event: React.MouseEvent<HTMLButtonElement>, newPage: number) => void;
+  onPageChange: (
+    event: React.MouseEvent<HTMLButtonElement>,
+    newPage: number
+  ) => void;
 }
 
 function TablePaginationActions(props: TablePaginationActionsProps) {
@@ -75,24 +88,36 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
         disabled={page === 0}
         aria-label="first page"
       >
-        {theme.direction === 'rtl' ? <LastPageIcon /> : <FirstPageIcon />}
+        {theme.direction === "rtl" ? <LastPageIcon /> : <FirstPageIcon />}
       </IconButton>
-      <IconButton onClick={handleBackButtonClick} disabled={page === 0} aria-label="previous page">
-        {theme.direction === 'rtl' ? <KeyboardArrowRight /> : <KeyboardArrowLeft />}
+      <IconButton
+        onClick={handleBackButtonClick}
+        disabled={page === 0}
+        aria-label="previous page"
+      >
+        {theme.direction === "rtl" ? (
+          <KeyboardArrowRight />
+        ) : (
+          <KeyboardArrowLeft />
+        )}
       </IconButton>
       <IconButton
         onClick={handleNextButtonClick}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
         aria-label="next page"
       >
-        {theme.direction === 'rtl' ? <KeyboardArrowLeft /> : <KeyboardArrowRight />}
+        {theme.direction === "rtl" ? (
+          <KeyboardArrowLeft />
+        ) : (
+          <KeyboardArrowRight />
+        )}
       </IconButton>
       <IconButton
         onClick={handleLastPageButtonClick}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
         aria-label="last page"
       >
-        {theme.direction === 'rtl' ? <FirstPageIcon /> : <LastPageIcon />}
+        {theme.direction === "rtl" ? <FirstPageIcon /> : <LastPageIcon />}
       </IconButton>
     </Box>
   );
@@ -120,7 +145,7 @@ const StudentDashboard: CustomNextPage = () => {
   const router = useRouter();
 
   const handleSubmit = () => {
-    router.push('../../comparison/StudentUploadPage');
+    router.push("../../comparison/StudentUploadPage");
   };
 
   useEffect(() => {
@@ -129,37 +154,42 @@ const StudentDashboard: CustomNextPage = () => {
       let userId = null;
       if (currentUser) {
         const email = currentUser.email;
-        const q = query(collection(db, 'Users'), where('Email', '==', email));
+        const q = query(collection(db, "Users"), where("Email", "==", email));
         const querySnapshot = await getDocs(q);
-  
+
         if (!querySnapshot.empty) {
           const userDoc = querySnapshot.docs[0];
           userId = userDoc.id;
         }
       }
-      const requestsCollection = collection(db, 'Requests');
-      const q = query(requestsCollection, where('Requester', '==', userId ? doc(db, 'Users', userId) : null));
-  
+      const requestsCollection = collection(db, "Requests");
+      const q = query(
+        requestsCollection,
+        where("Requester", "==", userId ? doc(db, "Users", userId) : null)
+      );
+
       // Listen for real-time updates
       const unsubscribe: () => void = onSnapshot(q, (querySnapshot) => {
         const processSnapshot = async () => {
           const fetchedRequests: RequestDisplayType[] = [];
-      
+
           for (const doc of querySnapshot.docs) {
             const requestData = doc.data() as RequestType;
-      
+
             // Convert the 'Date' object to a readable format
             const timestamp = requestData.Date as unknown as Timestamp;
-            const date = timestamp ? timestamp.toDate().toLocaleDateString(): '';
-      
+            const date = timestamp
+              ? timestamp.toDate().toLocaleDateString()
+              : "";
+
             // Fetch the ExternalSyllabus document
             const syllabusSnapshot = await getDoc(requestData.ExternalSyllabus);
             const syllabusData = syllabusSnapshot.data()?.CourseName;
-      
+
             // Fetch the Requester document
             const requesterSnapshot = await getDoc(requestData.Requester);
             const requesterData = requesterSnapshot.data()?.Name;
-      
+
             fetchedRequests.push({
               id: doc.id,
               Requester: requesterData,
@@ -168,108 +198,120 @@ const StudentDashboard: CustomNextPage = () => {
               Date: date,
             });
           }
-      
+
           setRequests(fetchedRequests);
         };
-      
+
         processSnapshot();
       });
-      
-  
+
       // Clean up the listener when the component unmounts
       return () => unsubscribe();
     };
-  
+
     fetchRequests();
   }, []); // <-- Empty dependency array
-  
+
   return (
     <>
-    <Grid item xs={12} mt={3} mb={3}>
-       {/* Use the HoverButton component here */}
-       <HoverButton instructions="This is the dashboard for Student.
-        You can submit a new transfer request as well as monitor the status of submitted requests." />
-    <Button variant="contained" color="primary" onClick={handleSubmit}>Submit new Request</Button>
-    </Grid>
-    <DashboardCard
-      title="Requests"
-      // action={
-      //   <CustomSelect labelId="month-dd" id="month-dd" size="small">
-      //     <MenuItem value={1}>March 2023</MenuItem>
-      //     <MenuItem value={2}>April 2023</MenuItem>
-      //     <MenuItem value={3}>May 2023</MenuItem>
-      //   </CustomSelect>
-      // }
-    >
-      <TableContainer>
-        <Table aria-label="simple table" sx={{ whiteSpace: 'nowrap' }}>
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <Typography variant="subtitle2" fontWeight={600}>
-                  Syllabus
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Typography variant="subtitle2" fontWeight={600}>
-                  Status
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Typography variant="subtitle2" fontWeight={600}>
-                  Date
-                </Typography>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {requests.map((request) => (
-              <TableRow key={request.id}>
+      <Grid item xs={12} mt={3} mb={3}>
+        {/* Use the HoverButton component here */}
+        <HoverButton
+          instructions="This is the dashboard for Student.
+        You can submit a new transfer request as well as monitor the status of submitted requests."
+        />
+        <Button variant="contained" color="primary" onClick={handleSubmit}>
+          Submit new Request
+        </Button>
+      </Grid>
+      <DashboardCard
+        title="Requests"
+        // action={
+        //   <CustomSelect labelId="month-dd" id="month-dd" size="small">
+        //     <MenuItem value={1}>March 2023</MenuItem>
+        //     <MenuItem value={2}>April 2023</MenuItem>
+        //     <MenuItem value={3}>May 2023</MenuItem>
+        //   </CustomSelect>
+        // }
+      >
+        <TableContainer>
+          <Table aria-label="simple table" sx={{ whiteSpace: "nowrap" }}>
+            <TableHead>
+              <TableRow>
                 <TableCell>
-                  <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
-                    {request.ExternalSyllabus}
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    Syllabus
                   </Typography>
                 </TableCell>
                 <TableCell>
-                <Chip
-                    sx={{
-                      bgcolor:
-                        request.Status === 'To-do'
-                          ? (theme) => theme.palette.error.light
-                          : request.Status === 'In progress'
-                          ? (theme) => theme.palette.warning.light
-                          : request.Status === 'Approved'
-                          ? (theme) => theme.palette.success.light
-                          : request.Status === 'Rejected'
-                          ? (theme) => theme.palette.error.light
-                          : (theme) => theme.palette.secondary.light,
-                      color:
-                        request.Status === 'To-do'
-                          ? (theme) => theme.palette.error.main
-                          : request.Status === 'In progress'
-                          ? (theme) => theme.palette.warning.main
-                          : request.Status === 'Approved'
-                          ? (theme) => theme.palette.success.main
-                          : request.Status === 'Rejected'
-                          ? (theme) => theme.palette.error.main
-                          : (theme) => theme.palette.secondary.main,
-                      borderRadius: '8px',
-                    }}
-                    size="small"
-                    label={request.Status}
-                  />
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    Status
+                  </Typography>
                 </TableCell>
                 <TableCell>
-                  <Typography color="textSecondary" variant="subtitle2" fontWeight={400}>
-                    {request.Date}
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    Date
                   </Typography>
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </DashboardCard></>
+            </TableHead>
+            <TableBody>
+              {requests.map((request) => (
+                <TableRow key={request.id}>
+                  <TableCell>
+                    <Typography
+                      color="textSecondary"
+                      variant="subtitle2"
+                      fontWeight={400}
+                    >
+                      {request.ExternalSyllabus}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      sx={{
+                        bgcolor:
+                          request.Status === "To-do"
+                            ? (theme) => theme.palette.error.light
+                            : request.Status === "In progress"
+                            ? (theme) => theme.palette.warning.light
+                            : request.Status === "Approved"
+                            ? (theme) => theme.palette.success.light
+                            : request.Status === "Rejected"
+                            ? (theme) => theme.palette.error.light
+                            : (theme) => theme.palette.secondary.light,
+                        color:
+                          request.Status === "To-do"
+                            ? (theme) => theme.palette.error.main
+                            : request.Status === "In progress"
+                            ? (theme) => theme.palette.warning.main
+                            : request.Status === "Approved"
+                            ? (theme) => theme.palette.success.main
+                            : request.Status === "Rejected"
+                            ? (theme) => theme.palette.error.main
+                            : (theme) => theme.palette.secondary.main,
+                        borderRadius: "8px",
+                      }}
+                      size="small"
+                      label={request.Status}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography
+                      color="textSecondary"
+                      variant="subtitle2"
+                      fontWeight={400}
+                    >
+                      {request.Date}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </DashboardCard>
+    </>
   );
 };
 
@@ -277,5 +319,4 @@ StudentDashboard.getLayout = function getLayout(page: ReactElement) {
   return <FullLayout>{page}</FullLayout>;
 };
 
-export default withRole({ Component: StudentDashboard, roles: ['Student'] });
-
+export default withRole({ Component: StudentDashboard, roles: ["Student"] });

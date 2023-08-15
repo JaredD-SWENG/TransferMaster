@@ -1,4 +1,4 @@
-import React, { useContext, useState, KeyboardEvent } from 'react';
+import React, { useContext, useState, KeyboardEvent } from "react";
 import {
   Box,
   Typography,
@@ -20,13 +20,15 @@ import { SetStateAction, Dispatch } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
 
-
 interface GetUserRoleByEmailProps {
   db: any;
   email: string;
 }
 
-async function getUserRoleByEmail({ db, email }: GetUserRoleByEmailProps): Promise<string | null> {
+async function getUserRoleByEmail({
+  db,
+  email,
+}: GetUserRoleByEmailProps): Promise<string | null> {
   const q = query(collection(db, "Users"), where("Email", "==", email));
   console.log(q);
   const querySnapshot = await getDocs(q);
@@ -67,8 +69,8 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     }
   };
 
- const handleKeyPress = (event: KeyboardEvent) => {
-    if (event.key === 'Enter') {
+  const handleKeyPress = (event: KeyboardEvent) => {
+    if (event.key === "Enter") {
       handleLogin();
     }
   };
@@ -89,7 +91,9 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
             variant="outlined"
             fullWidth
             value={email}
-            onChange={(e: { target: { value: React.SetStateAction<string> } }) => setEmail(e.target.value)}
+            onChange={(e: {
+              target: { value: React.SetStateAction<string> };
+            }) => setEmail(e.target.value)}
             onKeyPress={handleKeyPress}
           />
         </Box>
@@ -101,11 +105,18 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
             variant="outlined"
             fullWidth
             value={password}
-            onChange={(e: { target: { value: React.SetStateAction<string> } }) => setPassword(e.target.value)}
+            onChange={(e: {
+              target: { value: React.SetStateAction<string> };
+            }) => setPassword(e.target.value)}
             onKeyPress={handleKeyPress}
           />
         </Box>
-        <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
+        <Stack
+          justifyContent="space-between"
+          direction="row"
+          alignItems="center"
+          my={2}
+        >
           <FormGroup>
             <FormControlLabel
               control={<CustomCheckbox defaultChecked />}
